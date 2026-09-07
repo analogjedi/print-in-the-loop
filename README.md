@@ -4,10 +4,55 @@ Local parametric CAD using build123d, Python 3.12, uv, and explicit validation r
 The [original plan](Agentic_3D_Mechanical_Design_Project_Plan.md) remains the brief;
 [current status](docs/status.md) records what has actually been verified.
 
-The working foundation builds a 10 × 20 × 5 mm block, exports per-part STEP/STL
+The working foundation builds a cube with a sphere on top and a 10 × 20 × 5 mm block, exports per-part STEP/STL
 and an assembly STEP, reopens the STEP geometry, checks dimensions/origin/volume,
 and generates four review projections. The finger-joint specification records
 unknowns and deliberately blocks mechanism builds and releases.
+
+## Cube with a sphere
+
+The requested model is a **20 mm cube with a 16 mm diameter sphere**, centered
+on its top face and embedded 1 mm for one connected solid. Overall size: **20 × 20 × 35 mm**.
+Edit [specs/cube_sphere.yaml](specs/cube_sphere.yaml) to change the dimensions.
+
+```bash
+.tools/uv/bin/uv run --locked build_design specs/cube_sphere.yaml --output builds/my-cube-sphere
+.tools/uv/bin/uv run --locked inspect_geometry builds/my-cube-sphere/assembly.step --spec specs/cube_sphere.yaml
+.tools/uv/bin/uv run --locked render_review builds/my-cube-sphere/build_manifest.json --output builds/my-cube-review
+```
+
+Current artifacts: [STEP](builds/cube-sphere-v1/parts/cube_sphere.step),
+[STL](builds/cube-sphere-v1/parts/cube_sphere.stl),
+[FreeCAD document](builds/commissioning/CubeSphere.FCStd), and
+[review views](builds/cube-sphere-review/index.html).
+The FreeCAD document is derived from STEP; the Python source remains authoritative.
+
+FreeCAD and Bambu Studio are installed in `/Applications`. VS Code is configured
+to use this project’s `.venv`, with OCP CAD Viewer installed. For an immediately
+usable standalone interactive viewer, run this in one terminal:
+
+```bash
+.tools/uv/bin/uv run --locked python -m ocp_vscode --host 127.0.0.1 --port 3939 --theme light
+```
+
+Open `http://127.0.0.1:3939`, then in another terminal:
+
+```bash
+.tools/uv/bin/uv run --locked python tools/view_model.py
+```
+
+If that port is already running, reuse it. In VS Code, use **OCP CAD Viewer: Open
+viewer**, then pass its displayed port to `tools/view_model.py --port PORT`.
+For desktop inspection:
+
+```bash
+open -a FreeCAD builds/commissioning/CubeSphere.FCStd
+open -a BambuStudio builds/cube-sphere-v1/parts/cube_sphere.stl
+```
+
+The Bambu 3MF under `builds/commissioning/` is an unsliced default-profile import
+experiment, not a reviewed print project. Select and review your actual P2S nozzle,
+filament, plate, and process before slicing. No print has been started.
 
 ## Setup
 
@@ -66,8 +111,8 @@ JSON goes to stdout, a summary to stderr. Exit codes: **0 PASS, 1 FAIL, 2 BLOCKE
 | Command | Implemented scope |
 |---|---|
 | `validate_spec SPEC [--scope schema\|build\|release]` | Strict schema; explicit unknowns; development readiness. Default is build. Release always BLOCKED. |
-| `build_design SPEC --output DIR` | Smoke-test part and named assembly, exports, checks, manifest. Joint builder BLOCKED. |
-| `inspect_geometry STEP --spec SPEC` | Single smoke solid’s validity, dimensions, origin, volume against the specification. |
+| `build_design SPEC --output DIR` | Smoke block or cube/sphere, named assembly, exports, checks, manifest. Joint builder BLOCKED. |
+| `inspect_geometry STEP --spec SPEC` | Validity, dimensions, origin, analytic volume; sphere radius and center for cube/sphere. |
 | `render_review MANIFEST --output DIR` | Check assembly hash and generate four labeled SVG projections plus view manifest/HTML. |
 | `environment_report` | Python/package versions and known desktop app locations; inventory only. |
 

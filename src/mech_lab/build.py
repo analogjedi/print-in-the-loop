@@ -9,9 +9,10 @@ from build123d import Compound, Unit, export_step, export_stl, import_step
 
 from cad.interfaces.features import Frame
 from cad.parts.smoke_test import make_smoke_part
+from cad.parts.cube_sphere import make_cube_sphere
 from .geometry import GeometryPolicy, inspect, stl_bounds
 from .io import atomic_json, sha256, source_identity
-from .schema import load_spec, load_yaml, readiness
+from .schema import CubeSphereSpec, load_spec, load_yaml, readiness
 
 
 class BuildBlocked(ValueError):
@@ -50,12 +51,15 @@ def build(root, spec_path, output):
     stage = Path(tempfile.mkdtemp(prefix=".candidate-", dir=output.parent))
     try:
         registry = {}
+        part_id = "cube_sphere" if isinstance(spec, CubeSphereSpec) else "smoke_block"
+        expectations = spec if isinstance(spec, CubeSphereSpec) else spec.dimensions
         try:
-            register_part(registry, "smoke_block", make_smoke_part(spec.dimensions))
+            shape = make_cube_sphere(spec) if isinstance(spec, CubeSphereSpec) else make_smoke_part(spec.dimensions)
+            register_part(registry, part_id, shape)
         except Exception as exc:
             raise GeometryFailure(f"part construction failed: {exc}") from exc
-        part = registry["smoke_block"]
-        geometry = inspect(part, spec.dimensions, policy)
+        part = registry[part_id]
+        geometry = inspect(part, expectations, policy)
         if geometry["status"] != "PASS":
             atomic_json(stage / "geometry_report.json", geometry)
             raise GeometryFailure("constructed geometry fails checks; see diagnostic directory")
@@ -71,11 +75,11 @@ def build(root, spec_path, output):
         assembly = Compound(label=spec.project_id, children=list(registry.values()))
         if not export_step(assembly, stage / "assembly.step", unit=Unit.MM):
             raise GeometryFailure("assembly STEP export failed")
-        roundtrip = inspect(import_step(stage / "parts/smoke_block.step"), spec.dimensions,
+        roundtrip = inspect(import_step(stage / f"parts/{part_id}.step"), expectations,
                             policy, "step_roundtrip")
-        assembly_check = inspect(import_step(stage / "assembly.step"), spec.dimensions,
+        assembly_check = inspect(import_step(stage / "assembly.step"), expectations,
                                  policy, "assembly_roundtrip")
-        mesh = stl_bounds(stage / "parts/smoke_block.stl")
+        mesh = stl_bounds(stage / f"parts/{part_id}.stl")
         # STL stores float32 coordinates. This is export precision, not fit tolerance.
         expected = [spec.dimensions.x_mm, spec.dimensions.y_mm, spec.dimensions.z_mm]
         mesh_tolerance = max(policy.linear_tolerance_mm, max(expected) * 1.2e-7)
@@ -102,7 +106,7 @@ def build(root, spec_path, output):
                                "mesh": f"parts/{name}.stl"} for name in registry],
                     "limitations": ["No release or print authorization.",
                         "STL coordinates use millimeters by manifest convention; verify slicer import scale.",
-                        "FreeCAD, interactive viewer, and Bambu Studio import checks remain unexecuted."],
+                        "Desktop commissioning evidence is recorded separately from this build."],
                     "artifacts": {str(p.relative_to(stage)): sha256(p)
                                   for p in sorted(stage.rglob("*")) if p.is_file()}}
         atomic_json(stage / "build_manifest.json", manifest)

@@ -1,0 +1,43 @@
+"""Run with FreeCAD from this repository to verify STEP exchange and render it."""
+import json
+import math
+from pathlib import Path
+import FreeCAD as App
+import FreeCADGui as Gui
+import Import
+
+root = Path(__file__).resolve().parents[1]
+out = root / "builds/commissioning"
+out.mkdir(parents=True, exist_ok=True)
+records = []
+for name, step, expected, expected_volume in [
+    ("Smoke", "builds/baseline/assembly.step", (10,20,5), 1000),
+    ("CubeSphere", "builds/cube-sphere-v1/assembly.step", (20,20,35),
+     8000 + 4*math.pi*8**3/3 - math.pi*(8-1/3)),
+]:
+    doc = App.newDocument(name)
+    Import.insert(str(root / step), doc.Name)
+    doc.recompute()
+    shapes = [obj for obj in doc.Objects if hasattr(obj, "Shape") and len(obj.Shape.Solids) > 0]
+    if not shapes:
+        raise RuntimeError("STEP import did not create a solid")
+    obj = max(shapes, key=lambda obj: obj.Shape.Volume)
+    shape, box = obj.Shape, obj.Shape.BoundBox
+    dimensions = [box.XLength, box.YLength, box.ZLength]
+    passed = shape.isValid() and len(shape.Solids) == 1
+    passed = passed and all(abs(a-b) < 1e-6 for a,b in zip(dimensions, expected))
+    passed = passed and math.isclose(shape.Volume, expected_volume, rel_tol=1e-8)
+    obj.ViewObject.ShapeColor = (0.18, 0.52, 0.75)
+    obj.ViewObject.show()
+    Gui.activeDocument().activeView().viewAxonometric()
+    Gui.activeDocument().activeView().fitAll()
+    Gui.updateGui()
+    doc.saveAs(str(out / (name + ".FCStd")))
+    Gui.activeDocument().activeView().saveImage(str(out / (name + "-freecad.png")), 1280, 960, "White")
+    records.append({"model": name, "source_step": step, "status": "PASS" if passed else "FAIL",
+                    "dimensions_mm": dimensions, "volume_mm3": shape.Volume,
+                    "solid_count": len(shape.Solids), "is_valid": shape.isValid()})
+report = {"status": "PASS" if all(r["status"] == "PASS" for r in records) else "FAIL",
+          "scope": "FreeCAD STEP import and native rendering", "version": App.Version(), "checks": records}
+(out / "freecad-verification.json").write_text(json.dumps(report, indent=2))
+App.Console.PrintMessage(json.dumps(report) + "\n")

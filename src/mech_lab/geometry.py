@@ -3,7 +3,7 @@ import math
 import struct
 
 from pydantic import BaseModel, ConfigDict
-from .schema import Positive
+from .schema import CubeSphereSpec, Positive
 
 
 class GeometryPolicy(BaseModel):
@@ -33,7 +33,8 @@ def inspect(shape, expected, policy, prefix="geometry"):
 
     check("valid", measured["is_valid"], measured["is_valid"], True)
     check("solid_count", measured["solid_count"] == 1, measured["solid_count"], 1)
-    values = [expected.x_mm, expected.y_mm, expected.z_mm]
+    dimensions = expected.dimensions if isinstance(expected, CubeSphereSpec) else expected
+    values = [dimensions.x_mm, dimensions.y_mm, dimensions.z_mm]
     for index, axis in enumerate("xyz"):
         actual = measured["dimensions_mm"][index]
         check(f"{axis}_mm", math.isclose(actual, values[index], rel_tol=0,
@@ -41,6 +42,20 @@ def inspect(shape, expected, policy, prefix="geometry"):
         minimum = measured["minimum_mm"][index]
         check(f"origin_{axis}_mm", abs(minimum) <= policy.linear_tolerance_mm, minimum, 0)
     volume = math.prod(values)
+    if isinstance(expected, CubeSphereSpec):
+        r, h, side = expected.sphere_radius_mm, expected.sphere_embed_mm, expected.cube_size_mm
+        volume = side**3 + 4*math.pi*r**3/3 - math.pi*h*h*(r-h/3)
+        from OCP.BRepAdaptor import BRepAdaptor_Surface
+        from OCP.GeomAbs import GeomAbs_Sphere
+        spheres = [surface.Sphere() for face in shape.faces()
+                   if (surface := BRepAdaptor_Surface(face.wrapped)).GetType() == GeomAbs_Sphere]
+        check("spherical_face_count", len(spheres) == 1, len(spheres), 1)
+        if len(spheres) == 1:
+            actual_radius = spheres[0].Radius()
+            center = list(spheres[0].Location().Coord())
+            target = [side/2, side/2, side+r-h]
+            check("sphere_radius_mm", abs(actual_radius-r) <= policy.linear_tolerance_mm, actual_radius, r)
+            check("sphere_center_mm", all(abs(a-b) <= policy.linear_tolerance_mm for a,b in zip(center,target)), center, target)
     check("volume_mm3", math.isfinite(measured["volume_mm3"]) and math.isclose(
         measured["volume_mm3"], volume, rel_tol=policy.volume_relative_tolerance, abs_tol=0),
         measured["volume_mm3"], volume)

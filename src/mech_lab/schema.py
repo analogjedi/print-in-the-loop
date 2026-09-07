@@ -98,6 +98,30 @@ class SmokeSpec(Model):
     dimensions: Dimensions
 
 
+class CubeSphereSpec(Model):
+    schema_version: Literal[1]
+    project_id: Identifier
+    design_type: Literal["cube_sphere"]
+    release_class: Literal["toolchain_smoke_test"]
+    length_unit: Literal["mm"]
+    cube_size_mm: Positive
+    sphere_radius_mm: Positive
+    sphere_embed_mm: Positive
+
+    @model_validator(mode="after")
+    def connected_sphere(self):
+        if self.sphere_radius_mm * 2 > self.cube_size_mm:
+            raise ValueError("sphere diameter must fit within the cube footprint")
+        if self.sphere_embed_mm >= self.sphere_radius_mm:
+            raise ValueError("embed depth must be less than the sphere radius")
+        return self
+
+    @property
+    def dimensions(self):
+        return Dimensions(x_mm=self.cube_size_mm, y_mm=self.cube_size_mm,
+                          z_mm=self.cube_size_mm + 2*self.sphere_radius_mm - self.sphere_embed_mm)
+
+
 class JointSpec(Model):
     schema_version: Literal[1]
     project_id: Identifier
@@ -119,7 +143,7 @@ class JointSpec(Model):
         return self
 
 
-SPEC = TypeAdapter(Annotated[SmokeSpec | JointSpec, Field(discriminator="design_type")])
+SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec, Field(discriminator="design_type")])
 
 
 class UniqueLoader(yaml.SafeLoader):
@@ -171,7 +195,7 @@ def readiness(spec, scope):
                     blockers.append(f"requirements.{key} required for requested release class")
     if scope == "release":
         blockers.append("release evaluation and packaging are not implemented; no print authorization")
-        if isinstance(spec, SmokeSpec):
+        if isinstance(spec, (SmokeSpec, CubeSphereSpec)):
             blockers.append("toolchain smoke tests are not releasable manufacturing designs")
         else:
             for key, value in spec.manufacturing.model_dump().items():

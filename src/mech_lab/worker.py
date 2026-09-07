@@ -20,13 +20,14 @@ def run():
         from build123d import import_step
         from .geometry import GeometryPolicy, inspect
         from .io import sha256
-        from .schema import load_spec, load_yaml, SmokeSpec
+        from .schema import CubeSphereSpec, load_spec, load_yaml, SmokeSpec
         spec = load_spec(Path(arguments[1]))
-        if not isinstance(spec, SmokeSpec):
+        if not isinstance(spec, (SmokeSpec, CubeSphereSpec)):
             return {"status": "BLOCKED", "scope": "inspection", "blockers": ["only smoke-test inspection is implemented"]}
         policy_path = root / "validation/release_policy.yaml"
         policy = GeometryPolicy.model_validate(load_yaml(policy_path)["geometry"])
-        result = inspect(import_step(arguments[0]), spec.dimensions, policy)
+        expected = spec if isinstance(spec, CubeSphereSpec) else spec.dimensions
+        result = inspect(import_step(arguments[0]), expected, policy)
         result.update({"policy_sha256": sha256(policy_path), "step_sha256": sha256(Path(arguments[0])),
                        "specification_sha256": sha256(Path(arguments[1])), "scope": "smoke_geometry"})
         return result
@@ -38,9 +39,9 @@ def run():
                      for base in (Path("/Applications"), Path.home() / "Applications")]
             found = next((p for p in paths if p.exists()), None)
             info = plistlib.loads(found.read_bytes()) if found else {}
-            apps[name] = {"found": found is not None, "version": info.get("CFBundleShortVersionString"),
-                          "path": str(found.parent.parent) if found else None,
-                          "import_check_status": "BLOCKED"}
+            apps[name] = {"found": found is not None,
+                          "version": info.get("CFBundleShortVersionString") or info.get("CFBundleVersion"),
+                          "path": str(found.parent.parent) if found else None}
         return {"status": "PASS", "scope": "environment_inventory", **environment(), "applications": apps,
                 "limitations": ["Inventory is not application commissioning.",
                     "Printer/nozzle/material configuration has not been verified."]}

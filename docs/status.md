@@ -1,5 +1,44 @@
 # Foundation status
 
+## September 7 continuation: desktop configuration and cube/sphere
+
+Implemented the requested parametric cube/sphere model; **41 tests pass**.
+Source: `cad/parts/cube_sphere.py`; specification: `specs/cube_sphere.yaml`.
+The model is one valid solid: 20 mm cube, radius-8 mm sphere, 1 mm overlap,
+20 × 20 × 35 mm overall. Kernel volume: 10,120.575041 mm³. Reopened STEP
+checks include sphere radius/center and analytical volume, in addition to bounds.
+
+Installed FreeCAD 1.1.3 (native arm64), Bambu Studio 2.8.2.61 (universal with
+arm64), and VS Code OCP CAD Viewer 4.0.1. Python dependencies remain locked.
+VS Code selects `.venv/bin/python` through project settings.
+
+Current evidence:
+
+- `builds/cube-sphere-v1/`: STEP/STL, manifest, passing geometry report.
+- `builds/cube-sphere-review/`: four standard projections and HTML index.
+- OCP standalone viewer: model rendered and visually inspected;
+  `output/playwright/cube-sphere-ocp.png`.
+- FreeCAD imported both smoke and cube/sphere STEP models: dimensions, solid
+  count, validity, and volumes PASS in `builds/commissioning/freecad-verification.json`.
+  Native documents and rendered PNGs are alongside the report; the cube/sphere
+  render and actual FreeCAD window have been visually inspected.
+- Bambu Studio `--info`: one manifold mesh part, 20 × 20 × 35 mm, 6,994 facets.
+  Mesh volume 10,116.881836 mm³ differs from the exact solid through tessellation.
+  `builds/commissioning/bambu-model-info.txt` records the application’s measurements.
+- Bambu’s own `--export-png` preview was visually inspected. The unsliced
+  default-profile 3MF was also exported, without printing.
+- Installed Bambu P2S machine/process profiles are present. Actual hardware nozzle,
+  filament, plate, and process remain unverified.
+
+Remaining desktop interaction: Bambu Studio’s first-run wizard is open. macOS
+Screen Recording is now granted, but Accessibility has denied GUI control.
+Jamie has been asked to enable Terminal Accessibility or complete the wizard.
+The VS Code extension is installed; its in-editor viewer still needs a live check.
+Standalone OCP viewing is already operational. See D002 and README for commands.
+
+The earlier foundation snapshot below is retained as history; its original
+“apps not found” entries are superseded by the installation evidence above.
+
 Recorded for the continuation begun September 6, 2026. This is an implementation
 record, not a declaration that Phases 0–2 have passed all acceptance gates.
 

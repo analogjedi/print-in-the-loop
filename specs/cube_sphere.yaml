@@ -1,0 +1,8 @@
+schema_version: 1
+project_id: cube_sphere
+design_type: cube_sphere
+release_class: toolchain_smoke_test
+length_unit: mm
+cube_size_mm: 20.0
+sphere_radius_mm: 8.0
+sphere_embed_mm: 1.0
