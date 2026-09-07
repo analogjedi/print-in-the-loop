@@ -29,6 +29,9 @@ Current evidence:
   default-profile 3MF was also exported, without printing.
 - Installed Bambu P2S machine/process profiles are present. Actual hardware nozzle,
   filament, plate, and process remain unverified.
+- Fresh local checkout of `d6705f8`: locked dependencies installed offline into a
+  separate environment, all 41 tests passed, and cube/sphere build geometry reports
+  exactly match the main worktree. `builds/commissioning/cube-reproducibility.json`.
 
 Remaining desktop interaction: Bambu Studio’s first-run wizard is open. macOS
 Screen Recording is now granted, but Accessibility has denied GUI control.
