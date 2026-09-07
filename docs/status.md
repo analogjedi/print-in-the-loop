@@ -32,6 +32,11 @@ record, not a declaration that Phases 0–2 have passed all acceptance gates.
 - `inspect_geometry` on the exported assembly: PASS independently of the builder.
 - Browser review of all four smoke-v2 projections: rendered successfully;
   screenshot at `output/playwright/smoke-review.png`. Review-v3 improves line contrast.
+- Committed baseline `c7ddc80` rebuilt in `builds/clean-checkout` using a separate
+  virtual environment, `uv sync --locked --offline`, and the existing download cache.
+  All 36 tests pass there; source hashes, dependency versions, and geometry reports
+  match the clean main-worktree build. Evidence: `builds/reports/reproducibility.json`.
+  Main committed-source artifacts: `builds/baseline/`.
 
 The initial export failed when exporting an assembly child. Its failure report and
 candidate are retained under `builds/`; D001 explains the correction. No acceptance
@@ -50,5 +55,7 @@ threshold was changed. Generated evidence can be reproduced with README commands
 Next acceptance gate: commission the desktop viewer/FreeCAD/Bambu Studio path
 with the same smoke fixture and collect actual printer/component inputs. Installation
 outside this project needs Jamie’s approval under the kickoff instructions.
+The concrete installation and verification scope is in
+[desktop_commissioning.md](desktop_commissioning.md).
 
 No print, release, physical measurement, powered test, or load rating has occurred.
