@@ -1,0 +1,54 @@
+# Foundation status
+
+Recorded for the continuation begun September 6, 2026. This is an implementation
+record, not a declaration that Phases 0–2 have passed all acceptance gates.
+
+## Implemented and tested
+
+- Local Git repository and project-local uv 0.12.10; Python 3.12.6 / native arm64.
+- Locked build123d 0.11.1, CAD kernel package 7.9.3.1.1, ocp-vscode 3.4.0,
+  Pydantic 2.13.5, PyYAML 6.0.3, and pytest 9.1.1.
+- README, shared agent rules, charter, coordinate conventions, decision log,
+  unresolved joint specification, empty component registry, proposed release policy.
+- Five working CLI commands; strict schema validation and explicit BLOCKED states.
+- Parametric smoke part, named assembly/frame, per-part STEP/STL exports,
+  build/source/specification/policy manifests and checksums.
+- Native and reopened STEP validity, one-solid count, dimensions, origin, and volume.
+  Binary STL bounds/scale checks; manifoldness is not evaluated.
+- Four standard SVG review projections and an HTML review page.
+- Synthetic reusable shaft, bearing-seat, fastener-hole, and mounting-frame tools.
+- 36 passing tests, including seeded size/origin/solid-count/volume defects,
+  invalid specifications, failed construction diagnostics, and worker timeout handling.
+
+## Executed evidence
+
+- `uv sync`: dependencies installed and `uv.lock` generated.
+- `uv run --locked pytest -q`: 36 passed after correcting export order.
+- `build_design specs/smoke_test.yaml --output builds/smoke-v2`: PASS;
+  measured 10 × 20 × 5 mm, 1,000 mm³, one valid solid, STEP round trips and STL bounds pass.
+- `render_review builds/smoke-v2/build_manifest.json --output builds/review-v2`: PASS, four views.
+- `validate_spec specs/finger_joint_v1.yaml`: expected BLOCKED, exit 2.
+- `environment_report`: PASS inventory; desktop import checks BLOCKED.
+- `inspect_geometry` on the exported assembly: PASS independently of the builder.
+- Browser review of all four smoke-v2 projections: rendered successfully;
+  screenshot at `output/playwright/smoke-review.png`. Review-v3 improves line contrast.
+
+The initial export failed when exporting an assembly child. Its failure report and
+candidate are retained under `builds/`; D001 explains the correction. No acceptance
+threshold was changed. Generated evidence can be reproduced with README commands.
+
+## Open gates
+
+| Gate / phase | Status and next evidence |
+|---|---|
+| Phase 0 input freeze | BLOCKED: printer/nozzle/material, component drawings, envelope, mounting pattern, motion range, and A001 approval remain open. |
+| Phase 1 Python build/export | PASS for the known-size smoke fixture on this Mac. |
+| Phase 1 desktop commissioning | BLOCKED: FreeCAD and Bambu Studio not found in standard app directories; viewer extension not found in initial inventory. Install/inspect and record actual dimension/scale checks. |
+| Phase 2 foundation | Initial tools work. Joint builder, section workflow, approval reconciliation, and full interface registry remain unfinished. Phase 1 exit is still open. |
+| Phase 3 onward | Not commissioned; motion, assembly/keep-out checks, calibration, printing, physical assembly, and release remain future work. |
+
+Next acceptance gate: commission the desktop viewer/FreeCAD/Bambu Studio path
+with the same smoke fixture and collect actual printer/component inputs. Installation
+outside this project needs Jamie’s approval under the kickoff instructions.
+
+No print, release, physical measurement, powered test, or load rating has occurred.

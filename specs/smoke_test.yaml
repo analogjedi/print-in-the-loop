@@ -1,0 +1,9 @@
+schema_version: 1
+project_id: smoke_test
+design_type: smoke_test
+release_class: toolchain_smoke_test
+length_unit: mm
+dimensions:
+  x_mm: 10.0
+  y_mm: 20.0
+  z_mm: 5.0

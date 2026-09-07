@@ -1,0 +1,20 @@
+schema_version: 1
+policy_id: initial_foundation_v1
+approval_state: proposed
+approved_by: null
+approved_on: null
+geometry:
+  linear_tolerance_mm: 0.000001
+  volume_relative_tolerance: 0.00000001
+  stl_linear_deflection_mm: 0.01
+  stl_angular_deflection_rad: 0.1
+release_classes:
+  fit_coupon: [G0, G1, G4, G6]
+  kinematic_demonstrator: [G0, G1, G2, G3, G4, G5, G6]
+  functional_prototype: [G0, G1, G2, G3, G4, G5, G6]
+  qualified_design: [G0, G1, G2, G3, G4, G5, G6]
+notes:
+  - Numerical tolerances are software verification constants, not print tolerances.
+  - Kinematic G5 requires a manual physical test; it does not imply a load rating.
+  - A smoke test is development evidence and is never a print release.
+  - Release evaluation and packaging are not implemented; they must report BLOCKED.

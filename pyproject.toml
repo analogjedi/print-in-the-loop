@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jamie-mech-lab"
+version = "0.1.0"
+description = "Local, parametric mechanical CAD with explicit validation evidence"
+requires-python = ">=3.12,<3.13"
+dependencies = ["build123d>=0.10,<0.12", "ocp-vscode>=3,<4", "pydantic>=2.10,<3", "pyyaml>=6,<7"]
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+validate_spec = "mech_lab.cli:validate_spec"
+build_design = "mech_lab.cli:build_design"
+inspect_geometry = "mech_lab.cli:inspect_geometry"
+render_review = "mech_lab.cli:render_review"
+environment_report = "mech_lab.cli:environment_report"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mech_lab", "cad"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+cache-dir = ".uv-cache"
+python-downloads = "never"

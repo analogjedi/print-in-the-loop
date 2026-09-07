@@ -1,0 +1,40 @@
+schema_version: 1
+project_id: finger_joint_v1
+design_type: finger_joint
+release_class: kinematic_demonstrator
+length_unit: mm
+requirements:
+  external_envelope_mm: null
+  joint_range_deg: null
+  continuous_torque_nm: null
+  peak_torque_nm: null
+  output_speed_rpm: null
+  backlash_limit_deg: null
+  maximum_mass_g: null
+mechanism:
+  drive_type: manual
+  bearing_support: paired
+  removable_cover: true
+  mechanical_stops: true
+components:
+  shaft: null
+  bearings: []
+  fasteners: []
+  magnet: null
+  sensor_pcb: null
+manufacturing:
+  printer_id: bambu_p2s
+  machine_profile_id: null
+  nozzle_diameter_mm: null
+  material_profile_id: null
+  fit_calibration_id: null
+assumptions:
+  - id: A001
+    statement: Initial testing is manual and non-load-rated.
+    approval_state: proposed
+    approved_by: null
+    approval_date: null
+release_controls:
+  human_design_review_required: true
+  human_print_approval_required: true
+  human_powered_test_approval_required: true
