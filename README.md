@@ -4,10 +4,40 @@ Local parametric CAD using build123d, Python 3.12, uv, and explicit validation r
 The [original plan](Agentic_3D_Mechanical_Design_Project_Plan.md) remains the brief;
 [current status](docs/status.md) records what has actually been verified.
 
-The working foundation builds a cube with a sphere on top and a 10 × 20 × 5 mm block, exports per-part STEP/STL
+The working foundation builds a four-compound-gear 27:1 reducer, a cube with a sphere
+on top, and a 10 × 20 × 5 mm block. It exports per-part STEP/STL
 and an assembly STEP, reopens the STEP geometry, checks dimensions/origin/volume,
 and generates four review projections. The finger-joint specification records
 unknowns and deliberately blocks mechanism builds and releases.
+
+## ST3215 compound gearbox
+
+The gearbox uses four 60T/20T compound gears, plastic shafts integral with the
+back plate, and a removable cradle for Jamie's Waveshare ST3215. The first gear
+connects to the servo's existing metal horn through an adapter. The trial body is
+174 × 109 × 75.9 mm, excluding projecting hardware and cables.
+
+```bash
+.tools/uv/bin/uv run --locked validate_spec specs/gearbox_v1.yaml
+.tools/uv/bin/uv run --locked build_design specs/gearbox_v1.yaml --output builds/my-gearbox --timeout 600
+.tools/uv/bin/uv run --locked inspect_geometry builds/my-gearbox/assembly.step --spec specs/gearbox_v1.yaml --timeout 180
+```
+
+Open `builds/my-gearbox/review.html` for an offline interactive assembly, explosion,
+and geared animation. `print/` holds grounded individual STLs; `parts/` holds STEP
+parts in assembly coordinates. Build checks include STEP round trips, exact STL edge
+manifoldness, static interference, rotating-part envelopes, and tooth-motion clearance.
+
+[Assembly instructions and BOM](docs/gearbox_build_and_assembly.md) explain the trial
+fits, assumed hardware, and verification scope. The vendor servo STEP has geometry
+and re-export defects; the assembly uses three declared, dimensioned servo/horn
+reference solids, with the original supplier file preserved separately. Physical fit, load capacity, printing, and powered tests
+remain unverified/unapproved separately from the development CAD build.
+
+Completed candidate: [interactive review with assembly guide and BOM](builds/gearbox-review-v5/review.html),
+[assembly STEP](builds/gearbox-v4/assembly.step), and
+[individual STLs](builds/gearbox-v4/print/). All 49 tests and the candidate's geometry,
+mesh and motion checks passed. Generated artifacts are local and ignored by Git.
 
 ## Cube with a sphere
 
@@ -51,8 +81,10 @@ open -a BambuStudio builds/cube-sphere-v1/parts/cube_sphere.stl
 ```
 
 The Bambu 3MF under `builds/commissioning/` is an unsliced default-profile import
-experiment, not a reviewed print project. Select and review your actual P2S nozzle,
-filament, plate, and process before slicing. No print has been started.
+experiment, not a reviewed print project. The first actual print, a single gearbox
+gear test on October 11, used printer-reported nozzle, plate and AMS settings. See
+[first_print_gear2.md](docs/first_print_gear2.md) for the CLI slicing pitfalls
+(system presets must be flattened) and the P2S LAN delivery steps.
 
 ## Setup
 
@@ -111,8 +143,8 @@ JSON goes to stdout, a summary to stderr. Exit codes: **0 PASS, 1 FAIL, 2 BLOCKE
 | Command | Implemented scope |
 |---|---|
 | `validate_spec SPEC [--scope schema\|build\|release]` | Strict schema; explicit unknowns; development readiness. Default is build. Release always BLOCKED. |
-| `build_design SPEC --output DIR` | Smoke block or cube/sphere, named assembly, exports, checks, manifest. Joint builder BLOCKED. |
-| `inspect_geometry STEP --spec SPEC` | Validity, dimensions, origin, analytic volume; sphere radius and center for cube/sphere. |
+| `build_design SPEC --output DIR` | Smoke block, cube/sphere, or compound gearbox; named assembly, exports, checks, manifest. Finger-joint builder BLOCKED. |
+| `inspect_geometry STEP --spec SPEC` | Smoke validity/dimensions/analytic volume; sphere radius/center; gearbox solid-by-solid placement and volume against the specified assembly. |
 | `render_review MANIFEST --output DIR` | Check assembly hash and generate four labeled SVG projections plus view manifest/HTML. |
 | `environment_report` | Python/package versions and known desktop app locations; inventory only. |
 
@@ -133,8 +165,9 @@ and lists missing engineering inputs. This difference is intentional. Unknown fi
 missing units, invalid ranges, duplicate YAML keys, contradictory torques, and
 inconsistent approval metadata fail validation.
 
-The component registry is empty. No shaft, bearing, fastener, magnet, sensor PCB,
-printer profile, or fit calibration is verified. Approval metadata structure is
+The component registry records the selected ST3215, source drawings and Jamie's
+measurements. Gearbox trial fits/hardware are explicitly assumed under G002; purchased
+interface fit, printer profiles and calibration remain unverified. Approval metadata structure is
 validated, but identity authentication and approval-ledger reconciliation are not
 implemented. Proposed assumptions and policy must not be treated as approvals.
 All release requests remain blocked, including smoke-test release requests.

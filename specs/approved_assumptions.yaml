@@ -1,2 +1,12 @@
 schema_version: 1
-assumptions: []
+assumptions:
+  - id: G001
+    statement: Jamie approves the four-compound-assembly 27-to-1 gearbox layout in docs/gearbox_proposal.md for a test run. Servo interface dimensions remain pending separate confirmation; this is not print or powered-test approval.
+    approval_state: approved
+    approved_by: Jamie Haas
+    approval_date: 2026-09-07
+  - id: G002
+    statement: Jamie authorizes reasonable servo-based development assumptions for the end-to-end gearbox trial. Selected trial dimensions and interfaces are recorded in decisions/0003-gearbox-trial.md; they are not measured manufacturing tolerances or print/powered-test approval.
+    approval_state: approved
+    approved_by: Jamie Haas
+    approval_date: 2026-09-07

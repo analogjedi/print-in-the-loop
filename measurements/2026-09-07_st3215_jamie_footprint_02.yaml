@@ -1,0 +1,38 @@
+record_id: st3215_jamie_footprint_20260907_02
+record_type: user_reported_component_measurement_correction
+supersedes: st3215_jamie_footprint_20260907_01
+recorded_on: 2026-09-07
+length_unit: mm
+sample:
+  description: Jamie's Waveshare ST3215 servo
+  serial_number: null
+  build_identity: null
+  build_identity_reason: Purchased servo, not a project-printed part.
+process:
+  identity: null
+  reason: Purchased component; manufacturing process not supplied.
+measurement:
+  reported_by: Jamie Haas
+  instrument: null
+  instrument_resolution_mm: null
+  uncertainty_mm: null
+  datum_description: Footprint; exact contact surfaces not specified.
+  observations:
+    length_mm: 45.2
+    width_mm: 24.6
+  source_statement: "I meant 24.6 for the other footprint length!"
+  correction_note: Replaces the previously reported 26.6 mm width with 24.6 mm; the reported 45.2 mm length is unchanged.
+review:
+  reviewer: null
+  status: BLOCKED
+  reason: Corrected user observation preserved; instrument, resolution, contact datums, and formal measurement review are not supplied.
+comparison:
+  published_length_mm: 45.22
+  published_width_mm: 24.72
+  reported_minus_published_length_mm: -0.02
+  reported_minus_published_width_mm: -0.12
+  source: https://www.waveshare.com/img/devkit/accessories/ST3215-Servo/ST3215-Servo-details-size.jpg?v=26061202
+use_limits:
+  - This corrected footprint supersedes the earlier 45.2 by 26.6 mm observation.
+  - Not a printer calibration, manufacturing tolerance, horn measurement, or approval of other servo dimensions.
+  - Do not infer output-axis location or shrink the manufacturer's nominal envelope solely from this measurement.

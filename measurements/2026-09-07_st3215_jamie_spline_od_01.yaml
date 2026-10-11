@@ -1,0 +1,30 @@
+record_id: st3215_jamie_spline_od_20260907_01
+record_type: user_reported_component_measurement
+recorded_on: 2026-09-07
+length_unit: mm
+sample:
+  description: Jamie's Waveshare ST3215 servo output shaft
+  serial_number: null
+  build_identity: null
+  build_identity_reason: Purchased servo, not a project-printed part.
+process:
+  identity: null
+  reason: Purchased component; manufacturing process not supplied.
+measurement:
+  reported_by: Jamie Haas
+  instrument: null
+  instrument_resolution_mm: null
+  uncertainty_mm: null
+  datum_description: Outside diameter across the output shaft's outer ridges (spline tips).
+  observations:
+    spline_outer_diameter_mm: 5.8
+    apparent_material_description: brass, as reported by Jamie
+  source_statement: "The brass servo shaft output with outer ridges is 5.8mm OD."
+review:
+  reviewer: null
+  status: BLOCKED
+  reason: Reported observation preserved; instrument, resolution and formal measurement review are not supplied.
+use_limits:
+  - Outside diameter alone does not establish spline tooth count, root diameter, tooth profile, engagement length, or retaining-screw thread.
+  - Material description is a user observation, not a verified alloy specification.
+  - Do not substitute a smooth 5.8 mm bore for a mating spline or treat this as a print-fit allowance.

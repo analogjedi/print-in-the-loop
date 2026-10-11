@@ -143,7 +143,47 @@ class JointSpec(Model):
         return self
 
 
-SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec, Field(discriminator="design_type")])
+class GearboxSpec(Model):
+    schema_version: Literal[1]
+    project_id: Identifier
+    design_type: Literal["compound_gearbox"]
+    release_class: Literal["kinematic_demonstrator"]
+    length_unit: Literal["mm"]
+    gear_count: Literal[4]
+    large_teeth: Literal[60]
+    pinion_teeth: Literal[20]
+    module_mm: Literal[1.0]
+    pressure_angle_deg: Literal[20.0]
+    face_width_mm: Literal[4.0]
+    axial_step_mm: Literal[5.0]
+    tooth_thinning_mm: Positive
+    shaft_diameter_mm: Positive
+    shaft_diametral_clearance_mm: Positive
+    retainer_axial_clearance_mm: Positive
+    m3_clearance_mm: Positive
+    m3_tap_pilot_mm: Positive
+    servo_model: Literal["Waveshare ST3215"]
+    servo_step: str
+    servo_step_sha256: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+    trial_assumptions_authorized: Literal[True]
+    process_compensation_mm: Literal[0.0]
+
+    @model_validator(mode="after")
+    def feasible_trial(self):
+        if not 0 < self.tooth_thinning_mm < 0.3:
+            raise ValueError("trial tooth thinning must be between 0 and 0.3 mm")
+        if not 4 <= self.shaft_diameter_mm <= 5.5:
+            raise ValueError("this layout supports shafts between 4 and 5.5 mm")
+        if not 0.1 <= self.shaft_diametral_clearance_mm <= 0.6:
+            raise ValueError("trial diametral clearance must be 0.1 to 0.6 mm")
+        if not 0.1 <= self.retainer_axial_clearance_mm <= 0.5:
+            raise ValueError("trial axial clearance must be 0.1 to 0.5 mm")
+        if not 3.1 <= self.m3_clearance_mm <= 3.6 or not 2.3 <= self.m3_tap_pilot_mm <= 2.6:
+            raise ValueError("invalid trial M3 clearance or tapping pilot")
+        return self
+
+
+SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec | GearboxSpec, Field(discriminator="design_type")])
 
 
 class UniqueLoader(yaml.SafeLoader):
@@ -195,7 +235,9 @@ def readiness(spec, scope):
                     blockers.append(f"requirements.{key} required for requested release class")
     if scope == "release":
         blockers.append("release evaluation and packaging are not implemented; no print authorization")
-        if isinstance(spec, (SmokeSpec, CubeSphereSpec)):
+        if isinstance(spec, GearboxSpec):
+            blockers.append("gearbox trial fits, servo attachment, material and physical tests are unverified")
+        elif isinstance(spec, (SmokeSpec, CubeSphereSpec)):
             blockers.append("toolchain smoke tests are not releasable manufacturing designs")
         else:
             for key, value in spec.manufacturing.model_dump().items():

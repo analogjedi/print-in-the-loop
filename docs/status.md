@@ -1,5 +1,75 @@
 # Foundation status
 
+Latest handoff: [September 7 progress and proposed gearbox project](../latest_progress_sept_7_2026.md),
+then [October 11 first print](first_print_gear2.md).
+Jamie reports enabling Terminal Accessibility; the subsequent check in the existing
+session still returned `false`. Relaunch and recheck before resuming GUI commissioning.
+
+## October 11: first physical print — compound gear 2
+
+At Jamie's request, one gearbox part was sliced and sent to the P2S over LAN:
+`compound_gear_2`, flipped so the 60T face is on the plate, with no supports.
+Stock P2S 0.4 / 0.20 mm Standard / PLA Basic presets, Textured PEI, orange AMS slot,
+9.01 g, about 28 min. Full record: [first_print_gear2.md](first_print_gear2.md).
+
+| Check | Status | Evidence / scope |
+|---|---|---|
+| Printer configuration | PASS | Read from the printer: 0.4 mm hardened-steel nozzle, Textured PEI, AMS 2 with four PLA Basic spools. |
+| Slice | PASS | `builds/gear2-testprint-v1/gear2_orange.gcode.3mf`; flattened system presets, full P2S start block, MD5 matches. An earlier unflattened CLI slice was defective and was not sent. |
+| LAN delivery | PASS | FTPS upload to `/cache/`; H2-style `project_file` accepted; printer reached `RUNNING`. A first P1-style attempt was rejected (0x05004002) without starting. |
+| Print outcome and measurements | BLOCKED | Printing when recorded. Measure bore, tip diameters, pinion underside and first layer; record in `measurements/`. |
+| Gear fit and mesh | BLOCKED | Needs printed mating parts and measurements. |
+
+The printer was driven by one-off session scripts. No printer-control tool was added;
+AGENTS.md policy is unchanged.
+
+## Gearbox continuation — September 7: development CAD complete
+
+Jamie selected Waveshare ST3215, approved the four-compound-gear 27:1 layout (G001),
+and authorized reasonable trial assumptions for the end-to-end CAD exercise (G002).
+The implemented design has four 60T/20T module-1 gears on integral plastic shafts,
+a back plate, retainers, metal-horn adapter and removable servo cradle. It contains
+15 printable parts and measures **174 × 109 × 75.9 mm**, excluding projecting hardware
+and cables. Three external meshes give an output speed of −1/27 of the input.
+
+Current candidate: [builds/gearbox-v4](../builds/gearbox-v4/).
+The updated [HTML review with assembly guide and BOM](../builds/gearbox-review-v5/review.html)
+embeds the nonprinted hardware list, tools, powered-operation equipment and assembly
+sequence. Its `review_manifest.json` records a documentation refresh of unchanged v4
+STEP/STL geometry; `geometry_build_manifest.json` preserves the original build record.
+[Assembly guide and BOM](gearbox_build_and_assembly.md) records hardware and fits;
+[D003](../decisions/0003-gearbox-trial.md) explains the authorized assumptions.
+
+| Check | Status | Evidence / scope |
+|---|---|---|
+| Regression tests | PASS | 49 tests, including gearbox geometry and seeded mesh/phase defects. |
+| Candidate build | PASS | `builds/gearbox-v4/build_manifest.json`; 15 valid printed solids, STEP round trips, grounded manifold STLs. |
+| Independent STEP inspection | PASS | `builds/gearbox-inspection-v4.json`; all 18 assembly solids checked against specified geometry and placement. |
+| Static and moving clearances | PASS | `geometry_report.json`; printed parts and dimensioned servo references, plus full-revolution moving envelopes against fixed structures. |
+| Tooth motion | PASS | `motion_report.json`; 181 samples per mesh across one tooth period, interval clearance bound approximately 0.090 mm; nominal contact ratio 1.671. Software geometry results, not measured manufacturing performance. |
+| Bambu native mesh import | PASS | `builds/gearbox-verification-v4/bambu-gear1.txt` and `bambu-backplate.txt`; both one manifold part at expected millimeter dimensions. |
+| Interactive review | PASS | `builds/gearbox-verification-v4/browser.json`; assembled, gear-only, exploded and top views inspected; animation/pause/reset and −1/27 endpoint checked, WebGL error 0. |
+| Artifact provenance | PASS | All 55 artifact hashes match; CAD/specification/policy/dependency/viewer sources unchanged since build. D003 received a documented explanation-only correction. |
+| Physical fit, load capacity, print and powered test | BLOCKED | Hardware threads/lengths, printed clearances, material/process, cables, and actual servo assembly still need physical verification and approval. A single-gear test print began October 11 (see above). |
+
+The supplier STEP has an invalid casing solid and unstable re-export volumes in other
+solids. The candidate uses three explicitly dimensioned case/horn/wheel references,
+omitting spline teeth, threads and internal detail; it preserves the original supplier
+file separately. `servo_reference_report.json` records this limitation. The actual
+servo connection uses the supplied metal horn.
+
+Jamie's corrected footprint is **45.2 × 24.6 mm** and measured spline OD **5.8 mm**.
+Original records remain unchanged, including the superseded 26.6 mm width. Published
+nominal values remain separate: footprint 45.22 × 24.72 mm; Feetech ST-3215-C018 item
+6-9 specifies **25T/OD5.9 mm** and item 6-13 **M3 × 6 output retaining screw**.
+These do not establish every accessory thread. Source documents and applicability
+notes are in [servo dimensions](waveshare_st3215_dimensions.md).
+
+The earlier layout-only report is preserved in `builds/gearbox-layout-v1/`; detailed
+CAD supersedes its former input blockers. Desktop commissioning history below remains
+separate from completion of this digital gearbox trial. Generated files are local and
+ignored by Git. As of September 7, no release, print or powered test had occurred.
+
 ## September 7 continuation: desktop configuration and cube/sphere
 
 Implemented the requested parametric cube/sphere model; **41 tests pass**.

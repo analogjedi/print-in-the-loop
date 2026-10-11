@@ -20,8 +20,15 @@ def run():
         from build123d import import_step
         from .geometry import GeometryPolicy, inspect
         from .io import sha256
-        from .schema import CubeSphereSpec, load_spec, load_yaml, SmokeSpec
+        from .schema import CubeSphereSpec, GearboxSpec, load_spec, load_yaml, SmokeSpec
         spec = load_spec(Path(arguments[1]))
+        if isinstance(spec,GearboxSpec):
+            from .gearbox_checks import inspect_gearbox
+            policy_path=root/"validation/release_policy.yaml"
+            policy=GeometryPolicy.model_validate(load_yaml(policy_path)["geometry"])
+            result=inspect_gearbox(import_step(arguments[0]),spec,policy)
+            result.update({"step_sha256":sha256(Path(arguments[0])),"specification_sha256":sha256(Path(arguments[1])),"policy_sha256":sha256(policy_path)})
+            return result
         if not isinstance(spec, (SmokeSpec, CubeSphereSpec)):
             return {"status": "BLOCKED", "scope": "inspection", "blockers": ["only smoke-test inspection is implemented"]}
         policy_path = root / "validation/release_policy.yaml"

@@ -1,2 +1,29 @@
 schema_version: 1
-components: []
+components:
+  - id: waveshare_st3215
+    manufacturer: Waveshare
+    model: ST3215
+    selection_source: Jamie Haas, this session
+    length_unit: mm
+    published_nominal:
+      footprint_mm: [45.22, 24.72]
+      horn_diameter_mm: 19.2
+      opposite_horn_hole_spacing_mm: 14.0
+    user_measurements:
+      footprint_record: measurements/2026-09-07_st3215_jamie_footprint_02.yaml
+      spline_od_record: measurements/2026-09-07_st3215_jamie_spline_od_01.yaml
+    geometry_reference:
+      path: components/drawings/waveshare_st3215/ST3215.step
+      sha256: 58e38e4dc49f97df738c5f229f9aa8a7dce64a0a1d01335486a52d53e6017e8a
+      source: https://files.waveshare.com/upload/5/59/ST3215-3D.zip
+    supporting_spline_reference:
+      manufacturer: Feetech
+      model: ST-3215-C018
+      nominal_teeth: 25
+      nominal_od_mm: 5.9
+      output_retaining_screw: M3x6
+      source: https://www.feetechrc.com/Data/feetechrc/upload/file/20240507/6385067068652648096680943.pdf
+    trial_interface_assumptions:
+      horn_holes: M3 tapped, inferred from 2.5 mm STEP pilot bores; physical confirmation required
+      actual_spline_profile: Existing supplied horn used; no generated replacement spline
+    physical_interface_verification: BLOCKED
