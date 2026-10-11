@@ -12,7 +12,7 @@ from cad.parts.smoke_test import make_smoke_part
 from cad.parts.cube_sphere import make_cube_sphere
 from .geometry import GeometryPolicy, inspect, stl_bounds
 from .io import atomic_json, sha256, source_identity
-from .schema import CubeSphereSpec, GearboxSpec, load_spec, load_yaml, readiness
+from .schema import BldcStandSpec, CubeSphereSpec, GearboxSpec, IndicatorDiscSpec, load_spec, load_yaml, readiness
 
 
 class BuildBlocked(ValueError):
@@ -46,6 +46,12 @@ def build(root, spec_path, output):
     if isinstance(spec, GearboxSpec):
         from .gearbox_build import build as build_gearbox
         return build_gearbox(root,spec,spec_path,output)
+    if isinstance(spec, IndicatorDiscSpec):
+        from .disc_build import build as build_disc
+        return build_disc(root, spec, spec_path, output)
+    if isinstance(spec, BldcStandSpec):
+        from .stand_build import build as build_stand
+        return build_stand(root, spec, spec_path, output)
     if output.exists():
         raise ValueError("output already exists; choose a new build directory")
     policy_path = root / "validation/release_policy.yaml"

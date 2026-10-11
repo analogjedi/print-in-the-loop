@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLDC stand review</title><link rel="icon" href="data:,">
+<style>
+:root{--bg:#e9edf1;--panel:#fff;--bar:#f8fafc;--ink:#172b3a;--muted:#536777;--line:#cbd5df;--btn:#fff;--btn-line:#9aabb8;--pill:#e9f0f6}
+@media(prefers-color-scheme:dark){:root{--bg:#14191e;--panel:#1c232a;--bar:#192026;--ink:#e3e9ee;--muted:#9aaab6;--line:#2d3741;--btn:#222b33;--btn-line:#46525e;--pill:#26313b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui}
+header{padding:18px 24px;background:var(--panel);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:21px;margin:0 0 4px}p{margin:0;color:var(--muted)}
+button{border:1px solid var(--btn-line);border-radius:5px;padding:7px 13px;background:var(--btn);color:var(--ink);cursor:pointer}
+nav{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 24px;background:var(--bar);border-bottom:1px solid var(--line)}
+canvas{display:block;width:100%;height:calc(100vh - 190px);min-height:380px;touch-action:none}
+footer{padding:10px 24px;font-size:13px;background:var(--panel);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pill{padding:5px 10px;background:var(--pill);border-radius:4px;font-size:13px}#error{color:#c33;padding:10px}
+</style>
+<header><div><h1>Face-up BLDC evaluation stand</h1><p>__TITLE__</p></div><span class="pill">Development model · physical fit unverified</span></header>
+<nav><button id="reset">Reset view</button><button id="front">Front</button><button id="top">Top</button><button id="spin">Spin rotor</button>
+<label><input id="cut" type="checkbox"> Cutaway (front half)</label>
+<label><input id="g-motor" type="checkbox" checked> Motor</label>
+<label><input id="g-encoder" type="checkbox" checked> AS5600 stack</label>
+<label><input id="g-screws" type="checkbox" checked> Screws</label>
+<label>Explode <input id="explode" type="range" min="0" max="1" step="0.01" value="0"></label></nav>
+<div id="error" hidden></div><canvas id="view" aria-label="Interactive 3D stand assembly"></canvas>
+<footer><span id="info">Loading CAD meshes…</span><span>Drag to orbit · scroll to zoom · references are simplified supplier envelopes</span></footer>
+<script>
+const meshData=__MESH_DATA__;
+const canvas=document.querySelector('#view'),gl=canvas.getContext('webgl',{antialias:true,preserveDrawingBuffer:true});
+const error=document.querySelector('#error');
+if(!gl){error.hidden=false;error.textContent='WebGL is unavailable; open the assembly STEP in FreeCAD instead.';throw Error('WebGL unavailable')}
+const VIEW0={yaw:-.6,pitch:1.05,scale:95};let {yaw,pitch,scale}=VIEW0,spin=false,angle=0,last=0,drag=null;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+const vs=shader(gl.VERTEX_SHADER,`attribute vec3 p;attribute vec3 n;uniform vec3 col;uniform float rot;uniform float lift;uniform vec3 ctr;uniform float yaw;uniform float pitch;uniform float scale;uniform float aspect;varying vec3 color;varying vec3 world;
+void main(){float c=cos(rot),s=sin(rot);vec3 q=vec3(c*p.x-s*p.y,s*p.x+c*p.y,p.z+lift);world=q;q-=ctr;float x=cos(yaw)*q.x-sin(yaw)*q.y;float y=sin(yaw)*q.x+cos(yaw)*q.y;float sy=cos(pitch)*y+sin(pitch)*q.z;float d=cos(pitch)*q.z-sin(pitch)*y;gl_Position=vec4(x/(scale*aspect),sy/scale,-d/400.,1.);vec3 nn=normalize(vec3(c*n.x-s*n.y,s*n.x+c*n.y,n.z));color=col*(.38+.62*abs(dot(nn,normalize(vec3(.3,-.55,1.)))));}`);
+const fs=shader(gl.FRAGMENT_SHADER,`precision mediump float;varying vec3 color;varying vec3 world;uniform float cut;void main(){if(cut>.5&&world.y<0.)discard;gl_FragColor=vec4(color,1.);}`);
+const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+const U={};for(const k of ['col','rot','lift','ctr','yaw','pitch','scale','aspect','cut'])U[k]=gl.getUniformLocation(prog,k);
+const pa=gl.getAttribLocation(prog,'p'),na=gl.getAttribLocation(prog,'n');gl.enableVertexAttribArray(pa);gl.enableVertexAttribArray(na);gl.enable(gl.DEPTH_TEST);
+const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
+const meshes=meshData.map(m=>{const raw=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0));const dv=new DataView(raw.buffer),count=dv.getUint32(80,true),out=new Float32Array(count*18);
+for(let i=0;i<count;i++){const at=84+i*50;for(let j=0;j<3;j++)for(let k=0;k<3;k++){const v=dv.getFloat32(at+12+j*12+k*4,true);out[i*18+j*6+k]=v;lo[k]=Math.min(lo[k],v);hi[k]=Math.max(hi[k],v);out[i*18+j*6+3+k]=dv.getFloat32(at+k*4,true)}}
+const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);return {...m,data:undefined,buffer,count:count*3}});
+const ctr=lo.map((v,i)=>(v+hi[i])/2);
+const $=id=>document.querySelector(id);
+$('#reset').onclick=()=>{({yaw,pitch,scale}=VIEW0);$('#explode').value=0};$('#top').onclick=()=>{yaw=0;pitch=0;scale=80};$('#front').onclick=()=>{yaw=0;pitch=Math.PI/2;scale=80};
+$('#spin').onclick=()=>{spin=!spin;$('#spin').textContent=spin?'Stop rotor':'Spin rotor'};
+canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId)};
+canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.008;pitch=Math.max(-1.6,Math.min(1.6,pitch+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY]};canvas.onpointerup=()=>drag=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();scale=Math.max(25,Math.min(260,scale*Math.exp(e.deltaY*.001)))},{passive:false});
+const dark=matchMedia('(prefers-color-scheme: dark)');
+function draw(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;if(spin)angle=(angle+dt*120)%360;
+const w=Math.round(canvas.clientWidth*devicePixelRatio),h=Math.round(canvas.clientHeight*devicePixelRatio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+gl.viewport(0,0,w,h);const bg=dark.matches?[.08,.1,.12]:[.91,.93,.95];gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+gl.uniform1f(U.yaw,yaw);gl.uniform1f(U.pitch,pitch);gl.uniform1f(U.scale,scale);gl.uniform1f(U.aspect,w/h);gl.uniform3fv(U.ctr,ctr);gl.uniform1f(U.cut,$('#cut').checked?1:0);
+const ex=+$('#explode').value;let shown=0;
+for(const m of meshes){const box=$('#g-'+m.group);if(box&&!box.checked)continue;shown++;
+gl.bindBuffer(gl.ARRAY_BUFFER,m.buffer);gl.vertexAttribPointer(pa,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(na,3,gl.FLOAT,false,24,12);
+gl.uniform3fv(U.col,m.color);gl.uniform1f(U.rot,m.rotor?angle*Math.PI/180:0);gl.uniform1f(U.lift,ex*m.explode*(m.group==='encoder'?-1:1));gl.drawArrays(gl.TRIANGLES,0,m.count)}
+$('#info').textContent=`2 printed parts · ${shown} meshes shown · rotor ${angle.toFixed(0)}°`;
+window.standReview={ready:true,meshCount:meshes.length,shown,webglError:gl.getError()};requestAnimationFrame(draw)}requestAnimationFrame(draw);
+</script></html>

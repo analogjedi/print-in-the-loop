@@ -1,7 +1,13 @@
 # Foundation status
 
 Latest handoff: [September 7 progress and proposed gearbox project](../latest_progress_sept_7_2026.md),
-then [October 11 first print](first_print_gear2.md).
+then [October 11 first print](first_print_gear2.md). Proposed next project:
+[4015 BLDC face-up evaluation stand](bldc_4015_stand_proposal.md) — rev. 3 (two-screw motor plate; the encoder
+uses the other hole pair, so either board fits); v1 CAD built (`specs/bldc_4015_stand_v1.yaml`,
+84 checks PASS, 75 tests pass, interactive review in `builds/bldc-stand-v4/review.html`);
+sliced at 2 h 16 min, 99.7 g; printed 13:04–15:29 in black PLA, completed with no error;
+physical fit not yet checked. The rotor indicator disc
+(`specs/indicator_disc_v1.yaml`) is built but on hold for a second motor type.
 Jamie reports enabling Terminal Accessibility; the subsequent check in the existing
 session still returned `false`. Relaunch and recheck before resuming GUI commissioning.
 
@@ -17,7 +23,8 @@ Stock P2S 0.4 / 0.20 mm Standard / PLA Basic presets, Textured PEI, orange AMS s
 | Printer configuration | PASS | Read from the printer: 0.4 mm hardened-steel nozzle, Textured PEI, AMS 2 with four PLA Basic spools. |
 | Slice | PASS | `builds/gear2-testprint-v1/gear2_orange.gcode.3mf`; flattened system presets, full P2S start block, MD5 matches. An earlier unflattened CLI slice was defective and was not sent. |
 | LAN delivery | PASS | FTPS upload to `/cache/`; H2-style `project_file` accepted; printer reached `RUNNING`. A first P1-style attempt was rejected (0x05004002) without starting. |
-| Print outcome and measurements | BLOCKED | Printing when recorded. Measure bore, tip diameters, pinion underside and first layer; record in `measurements/`. |
+| Print completion | PASS | `FINISH`, `print_error 0`, 45/45 layers; final camera frame shows a complete gear. Two HMS notices logged during the job have not been looked up. |
+| Printed-part measurements | BLOCKED | Measure bore, tip diameters, pinion underside and first layer; record in `measurements/`. |
 | Gear fit and mesh | BLOCKED | Needs printed mating parts and measurements. |
 
 The printer was driven by one-off session scripts. No printer-control tool was added;

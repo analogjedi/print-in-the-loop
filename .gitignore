@@ -8,3 +8,8 @@ builds/
 .DS_Store
 .playwright-cli/
 output/playwright/
+
+# Third-party supplier drawings, CAD and listing images are not redistributed.
+# Their sources and SHA-256 checksums stay tracked; see components/drawings/README.md.
+components/drawings/*/*
+!components/drawings/*/*.json

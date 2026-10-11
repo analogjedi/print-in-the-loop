@@ -1,0 +1,36 @@
+record_id: bldc4015_as5600_mount_jamie_20261011_01
+record_type: user_reported_component_measurement
+recorded_on: 2026-10-11
+length_unit: mm
+sample:
+  description: Jamie's 4015 BLDC (24N22P hollow shaft) with retrofitted AS5600 encoder board
+  serial_number: null
+  build_identity: null
+  build_identity_reason: Purchased motor and encoder board, not project-printed parts.
+process:
+  identity: null
+  reason: Purchased components; manufacturing process not supplied.
+measurement:
+  reported_by: Jamie Haas
+  instrument: null
+  instrument_resolution_mm: null
+  uncertainty_mm: null
+  datum_description: Encoder stack on the motor's stationary (wire-side) face, inner hole circle.
+  observations:
+    pcb_mounted_to: inner hole circle of the stationary motor end
+    pcb_slots_used: 2 diagonally opposite corner slots; the other 2 corner slots are free
+    motor_to_pcb_standoff: silver hex male-female standoff, approximately 4 to 5 mm
+    pcb_to_free_end_standoff: brass hex, approximately 7 mm, on the side of the PCB away from the motor
+  source_statements:
+    - "It's the inner holes of the non rotating end of the motor that the PCB is mounted to."
+    - "Those are on top of the PCB but the PCB mounts to the motor with shorter silver hex screw/nut combo that is roughly 4-5mm, not 7mm."
+    - "I used 2 to mount the AS5600 to the motor on the 2 outer diagonals, The opposite 2 outer holes (opposite diagonal on PCB) are free."
+  correction_note: An earlier statement in the same conversation gave 7 mm as the motor-to-PCB standoff; Jamie corrected it before this record was written.
+review:
+  reviewer: null
+  status: BLOCKED
+  reason: Reported observation preserved; instrument, resolution and formal measurement review are not supplied.
+use_limits:
+  - Approximate standoff length; size motor-plate clearance for the 4 mm lower bound.
+  - Mounting through the AS5600 corner slots (spanning Ø28–34 per supplier drawing) supports the drawing's Ø28 inner circle over the table's Ø26, but no hole-circle diameter was measured.
+  - Does not establish magnet-to-chip air gap or encoder performance.

@@ -86,8 +86,18 @@ implemented; adding such a tool is a policy change for Jamie to review.
 
 ## Outcome and next checks
 
-At the time of this record the job was printing. Record the outcome and any
-measurements as new files under `measurements/`; never edit earlier records. Check:
+**Completed 12:13 local**: `FINISH`, `print_error 0`, 45/45 layers, about 28 minutes
+from the start command. The final camera frame (`frames/121329_final.jpg`) shows a complete
+gear, large face down, pinion on top, with no visible failure. A small dark blob sat on
+the front-left of the plate, apparently not orange; remove it before the next print.
+
+The printer logged two new HMS notices during the job; their meaning has not been looked up:
+`0C00-0100-0002-001B` and `0500-0300-0002-0013`. Check them against the Bambu
+HMS wiki or the printer screen. Their timestamps (23:43–23:44 UTC on the printer's clock) do not
+match local time, so the printer clock or timezone may be off. The October 4 entry
+`0300-2E00-0003-0001` predates this job.
+
+Record measurements as new files under `measurements/`; never edit earlier records. Check:
 
 - Bore against the Ø5.4 mm nominal (shaft Ø5.0 mm, 0.4 mm diametral clearance).
 - Tip and root diameters against nominal: 60T outside Ø62.0, 20T outside Ø22.0.

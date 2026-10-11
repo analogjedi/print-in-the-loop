@@ -1,0 +1,22 @@
+schema_version: 1
+project_id: indicator_disc_v1
+design_type: indicator_disc
+release_class: kinematic_demonstrator
+length_unit: mm
+# Supplier drawing components/drawings/bldc_4015/: rotor face 4 x M2.5 on Ø15 at 0/90/180/270,
+# 3 mm allowable thread depth (table), Ø7.5 hollow bore. Supplier nominals, not measured.
+motor_reference: 4015 BLDC 24N22P hollow shaft (components/drawings/bldc_4015)
+diameter_mm: 60.0
+thickness_mm: 3.5
+center_hole_mm: 8.0
+screw_circle_mm: 15.0
+screw_angles_deg: [0.0, 90.0, 180.0, 270.0]
+screw_clearance_mm: 2.9
+countersink_diameter_mm: 5.0
+marker_shapes: [circle, triangle, square, cross]
+marker_angles_deg: [0.0, 90.0, 180.0, 270.0]
+marker_radius_mm: 22.0
+marker_size_mm: 8.0
+marker_depth_mm: 0.6
+trial_assumptions_authorized: true
+process_compensation_mm: 0.0

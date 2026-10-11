@@ -1,191 +1,201 @@
-# Jamie’s Mechanical Design Lab
+# print-in-the-loop
 
-Local parametric CAD using build123d, Python 3.12, uv, and explicit validation reports.
-The [original plan](Agentic_3D_Mechanical_Design_Project_Plan.md) remains the brief;
-[current status](docs/status.md) records what has actually been verified.
+**Agent-driven parametric CAD for 3D printing.** A human and an AI coding agent design
+mechanical parts as Python, prove them with automated geometry checks, review them in an
+interactive 3D page, then slice and print them on a Bambu Lab P2S. Measurements from the
+real parts go back into the specs.
 
-The working foundation builds a four-compound-gear 27:1 reducer, a cube with a sphere
-on top, and a 10 × 20 × 5 mm block. It exports per-part STEP/STL
-and an assembly STEP, reopens the STEP geometry, checks dimensions/origin/volume,
-and generates four review projections. The finger-joint specification records
-unknowns and deliberately blocks mechanism builds and releases.
+<p align="center">
+  <img src="docs/images/stand-cutaway.png" width="49%" alt="Cutaway of the BLDC evaluation stand: motor in its plate pocket, AS5600 encoder board hanging below on standoffs">
+  <img src="docs/images/gearbox-assembled.png" width="49%" alt="27:1 compound gearbox with four coloured 60T/20T gears under a servo cradle">
+</p>
 
-## ST3215 compound gearbox
-
-The gearbox uses four 60T/20T compound gears, plastic shafts integral with the
-back plate, and a removable cradle for Jamie's Waveshare ST3215. The first gear
-connects to the servo's existing metal horn through an adapter. The trial body is
-174 × 109 × 75.9 mm, excluding projecting hardware and cables.
-
-```bash
-.tools/uv/bin/uv run --locked validate_spec specs/gearbox_v1.yaml
-.tools/uv/bin/uv run --locked build_design specs/gearbox_v1.yaml --output builds/my-gearbox --timeout 600
-.tools/uv/bin/uv run --locked inspect_geometry builds/my-gearbox/assembly.step --spec specs/gearbox_v1.yaml --timeout 180
+```mermaid
+flowchart LR
+  S[YAML spec] --> V{validate}
+  V -->|BLOCKED: unknowns| S
+  V --> C[build123d CAD]
+  C --> K{geometry, clearance<br/>& motion checks}
+  K -->|FAIL| C
+  K --> R[interactive 3D review]
+  R --> H{human approval}
+  H --> P[slice → print on P2S]
+  P --> M[measure the real part]
+  M --> S
 ```
 
-Open `builds/my-gearbox/review.html` for an offline interactive assembly, explosion,
-and geared animation. `print/` holds grounded individual STLs; `parts/` holds STEP
-parts in assembly coordinates. Build checks include STEP round trips, exact STL edge
-manifoldness, static interference, rotating-part envelopes, and tooth-motion clearance.
+Every step reports **PASS / FAIL / BLOCKED**. Unknown engineering values stay unknown instead
+of being guessed, and nothing gets printed without the human saying so.
 
-[Assembly instructions and BOM](docs/gearbox_build_and_assembly.md) explain the trial
-fits, assumed hardware, and verification scope. The vendor servo STEP has geometry
-and re-export defects; the assembly uses three declared, dimensioned servo/horn
-reference solids, with the original supplier file preserved separately. Physical fit, load capacity, printing, and powered tests
-remain unverified/unapproved separately from the development CAD build.
+## What's been built
 
-Completed candidate: [interactive review with assembly guide and BOM](builds/gearbox-review-v5/review.html),
-[assembly STEP](builds/gearbox-v4/assembly.step), and
-[individual STLs](builds/gearbox-v4/print/). All 49 tests and the candidate's geometry,
-mesh and motion checks passed. Generated artifacts are local and ignored by Git.
+### Face-up BLDC motor evaluation stand · *printed*
 
-## Cube with a sphere
+<p align="center"><img src="docs/images/stand-printed.jpg" width="70%" alt="The printed stand on the P2S plate: black tower and base with a pointed window, and the slotted motor plate beside it"></p>
 
-The requested model is a **20 mm cube with a 16 mm diameter sphere**, centered
-on its top face and embedded 1 mm for one connected solid. Overall size: **20 × 20 × 35 mm**.
-Edit [specs/cube_sphere.yaml](specs/cube_sphere.yaml) to change the dimensions.
+<p align="center">
+  <img src="docs/images/stand-exploded.png" width="49%" alt="Exploded view: motor above a slotted motor plate, above a tower with an encoder board visible inside">
+  <img src="docs/images/stand-top-encoder.png" width="40%" alt="Top view with the motor hidden: the encoder board shows through the plate's center opening and standoff slots">
+</p>
 
-```bash
-.tools/uv/bin/uv run --locked build_design specs/cube_sphere.yaml --output builds/my-cube-sphere
-.tools/uv/bin/uv run --locked inspect_geometry builds/my-cube-sphere/assembly.step --spec specs/cube_sphere.yaml
-.tools/uv/bin/uv run --locked render_review builds/my-cube-sphere/build_manifest.json --output builds/my-cube-review
-```
+A desktop holder for developing a motor driver and FOC control loop with a 4015 hollow-shaft
+gimbal motor (24N22P, 11 pole pairs).
 
-Current artifacts: [STEP](builds/cube-sphere-v1/parts/cube_sphere.step),
-[STL](builds/cube-sphere-v1/parts/cube_sphere.stl),
-[FreeCAD document](builds/commissioning/CubeSphere.FCStd), and
-[review views](builds/cube-sphere-review/index.html).
-The FreeCAD document is derived from STEP; the Python source remains authoritative.
+- **The encoder board stays swappable.** The motor's two hole circles lie on the same four
+  axes, 5.5 mm apart, so a stand screw and an encoder standoff can't share an axis. The
+  stand uses one opposite pair of holes and the encoder the other. Below the motor is an
+  open Ø78 × 50 mm cavity for any board up to 53 mm square, on standoffs from 3 to 8 mm.
+  It fits both the supplied MT6701 board and a retrofitted 33 mm AS5600.
+- **Two printed parts.** A motor-specific plate (Ø90 × 4 mm) sits on a common tower and
+  base (150 × 110 × 56 mm), so supporting another motor means printing a new plate.
+- **84 automated checks.** Keep-outs for the rotating bell and boss, an encoder envelope
+  swept across the standoff range, standoff passage through the slots, motor seat and
+  tower support, screw engagement against the 3 mm thread depth, window/base integrity,
+  STEP round trips and manifold STLs.
+- Prints without supports: 2 h 16 min, ~100 g PLA.
 
-FreeCAD and Bambu Studio are installed in `/Applications`. VS Code is configured
-to use this project’s `.venv`, with OCP CAD Viewer installed. For an immediately
-usable standalone interactive viewer, run this in one terminal:
+[Design notes and assembly →](docs/bldc_4015_stand_proposal.md)
 
-```bash
-.tools/uv/bin/uv run --locked python -m ocp_vscode --host 127.0.0.1 --port 3939 --theme light
-```
+### 27:1 compound gearbox · *CAD complete*
 
-Open `http://127.0.0.1:3939`, then in another terminal:
+<p align="center"><img src="docs/images/gearbox-exploded.png" width="45%" alt="Exploded gearbox: cradle plates above four compound gears on integral plastic shafts"></p>
 
-```bash
-.tools/uv/bin/uv run --locked python tools/view_model.py
-```
+Four 60T/20T module-1 compound gears on plastic shafts printed with the back plate,
+driven by a Waveshare ST3215 servo through its metal horn. Three meshes give −1/27.
+15 printable parts, 174 × 109 × 75.9 mm. Checks include involute mesh profiles, tooth-phase
+sampling over a full tooth period (contact ratio 1.67), full-revolution moving envelopes and
+static interference. The vendor servo STEP contained an invalid solid, so the assembly uses
+dimensioned reference envelopes, and the limitation is documented rather than hidden.
 
-If that port is already running, reuse it. In VS Code, use **OCP CAD Viewer: Open
-viewer**, then pass its displayed port to `tools/view_model.py --port PORT`.
-For desktop inspection:
+[Assembly guide and BOM →](docs/gearbox_build_and_assembly.md) · [Design decision D003 →](decisions/0003-gearbox-trial.md)
 
-```bash
-open -a FreeCAD builds/commissioning/CubeSphere.FCStd
-open -a BambuStudio builds/cube-sphere-v1/parts/cube_sphere.stl
-```
+### First print · *one gear, October 2026*
 
-The Bambu 3MF under `builds/commissioning/` is an unsliced default-profile import
-experiment, not a reviewed print project. The first actual print, a single gearbox
-gear test on October 11, used printer-reported nozzle, plate and AMS settings. See
-[first_print_gear2.md](docs/first_print_gear2.md) for the CLI slicing pitfalls
-(system presets must be flattened) and the P2S LAN delivery steps.
+<p align="center"><img src="docs/images/first-print-gear2.jpg" width="60%" alt="Orange printed compound gear on the textured PEI plate, viewed from the printer camera"></p>
 
-## Setup
+A test gear printed large-face-down so the 60T teeth need no support. Getting there turned
+up two traps worth knowing if you script Bambu Studio:
 
-On this Mac, uv is installed locally at `.tools/uv/bin/uv`. Python 3.12.6 was
-already installed. No global Python or shell configuration was changed.
+- **The CLI does not resolve system presets.** Passing stock P2S profiles directly produced
+  G-code with a generic `G28` start: no AMS filament load, no bed leveling. It would have
+  printed air. Flatten each preset's `inherits` chain and `include` templates first.
+- **The P2S wants the H2-style `project_file` command over LAN.** It needs a `ftp:///cache/<file>`
+  URL and non-zero task IDs. The older P1/X1 form fails with `0500-4002 Unsupported file path or name`.
 
-For a fresh checkout with Python 3.12 available:
+[Full print record →](docs/first_print_gear2.md)
+
+### Rotor indicator disc · *on hold*
+
+An orange disc with flush black inlaid markers at 0/90/180/270° (circle, triangle, square,
+cross) for eyeballing position-control tests. Designed and checked as a two-color print;
+waiting on a second motor type so one disc can fit both.
+
+## How the checks work
+
+Each design type has its own builder in `src/mech_lab/` and its own independent checks:
+
+| Check | What it proves |
+|---|---|
+| Valid single solids | The CAD kernel considers every printed part a closed, valid solid |
+| Envelope and placement | Dimensions, origin and marker/hole positions match the spec, not the CAD code's intent |
+| Interference and keep-outs | Zero overlap with moving parts, purchased-part envelopes and swept ranges |
+| Motion | Tooth clearance across sampled mesh phases; full-revolution swept volumes |
+| Export round trip | STEP reopens with identical volume and bounds; STL is edge-manifold and grounded |
+| Seeded defects | Tests break the geometry on purpose (shifted marker, thick floor, notched base…) and require the matching check to fail |
+
+Software tolerances (1e-6 mm, 1e-8 relative volume) prove the model is self-consistent.
+They are **not** print tolerances. Printed fit is only established by measuring real parts.
+Changing an acceptance threshold to make a design pass is against the rules here. When the
+stand's arched windows failed the STEP round trip by 3.6e-8, the window shape changed
+instead.
+
+## Quick start
+
+Requires Python 3.12. Commissioned on native arm64 macOS; other platforms are untested.
 
 ```bash
 python3.12 -m venv .tools/uv
 .tools/uv/bin/python -m pip install --disable-pip-version-check --no-cache-dir uv==0.12.10
 .tools/uv/bin/uv sync --locked
-.tools/uv/bin/uv run --locked pytest -q
+.tools/uv/bin/uv run --locked pytest -q          # 75 tests, about a minute
 ```
 
-If `uv` is already installed, use it instead of `.tools/uv/bin/uv`. Dependencies
-are locked in `uv.lock`; Python auto-download is disabled. Install a supported
-Python 3.12 first if it is missing. The environment is commissioned on native arm64
-macOS only; other platforms remain unverified. Network access is needed for an
-initial dependency download. Package and font caches stay inside the workspace.
-
-## Build and review
-
-Run from the repository root. Use a new output directory on each build:
+If `uv` is already installed, use it in place of `.tools/uv/bin/uv`. Build a design into a
+new directory, then open its interactive review:
 
 ```bash
-.tools/uv/bin/uv run --locked validate_spec specs/smoke_test.yaml
-.tools/uv/bin/uv run --locked build_design specs/smoke_test.yaml --output builds/my-smoke
-.tools/uv/bin/uv run --locked inspect_geometry builds/my-smoke/assembly.step --spec specs/smoke_test.yaml
-.tools/uv/bin/uv run --locked render_review builds/my-smoke/build_manifest.json --output builds/my-review
-.tools/uv/bin/uv run --locked environment_report
+uv run --locked build_design specs/bldc_4015_stand_v1.yaml --output builds/my-stand
+open builds/my-stand/review.html                  # orbit, cutaway, explode, spin the rotor
+
+uv run --locked build_design specs/gearbox_v1.yaml --output builds/my-gearbox --timeout 600
+open builds/my-gearbox/review.html                # animated 27:1 gear train + BOM
 ```
 
-Open `builds/my-review/index.html` in a browser to see isometric, top, front,
-and right projections. SVGs come from CAD-kernel projection. They complement the
-numerical report; they are not interactive-viewer, FreeCAD, or slicer commissioning.
+The gearbox build needs Waveshare's ST3215 STEP, which isn't redistributed here. Download it
+from the source listed in [components/drawings/README.md](components/drawings/README.md); the
+build verifies its SHA-256. Without it, the one test that needs it is skipped.
 
-Build output includes `build_manifest.json`, `geometry_report.json`, copies of
-the specification/policy, `assembly.step`, and `parts/smoke_block.step` / `.stl`.
-The manifest records dependency versions, source hashes, Git revision and dirty
-state, frames, units, artifact hashes, and limitations. Expect equivalent geometry,
-not byte-identical STEP metadata. STL’s millimeter convention is recorded in the
-manifest; actual slicer import scale still needs verification.
+Each build writes `parts/*.step`, print-oriented `print/*.stl`, `assembly.step`,
+`geometry_report.json` and a `build_manifest.json` that records source, dependency and
+artifact hashes. `builds/` is git-ignored; everything in it can be regenerated.
 
-Outputs are confined to `builds/`. Existing candidate/report paths are refused.
-Artifacts are staged then published together; failed candidates retain diagnostic
-directories. JSON reports are written atomically. CAD worker timeout is 120 seconds
-by default (`--timeout`); timed-out staging files can remain for diagnosis.
+## Tools
 
-## Tool contracts and limits
+Every command emits JSON plus a short summary. Exit codes: **0 PASS · 1 FAIL · 2 BLOCKED**.
 
-Every public command supports `--report builds/reports/<new-name>.json`.
-If omitted, a report with a unique ID is created under `builds/reports/`.
-JSON goes to stdout, a summary to stderr. Exit codes: **0 PASS, 1 FAIL, 2 BLOCKED**.
-
-| Command | Implemented scope |
+| Command | Scope |
 |---|---|
-| `validate_spec SPEC [--scope schema\|build\|release]` | Strict schema; explicit unknowns; development readiness. Default is build. Release always BLOCKED. |
-| `build_design SPEC --output DIR` | Smoke block, cube/sphere, or compound gearbox; named assembly, exports, checks, manifest. Finger-joint builder BLOCKED. |
-| `inspect_geometry STEP --spec SPEC` | Smoke validity/dimensions/analytic volume; sphere radius/center; gearbox solid-by-solid placement and volume against the specified assembly. |
-| `render_review MANIFEST --output DIR` | Check assembly hash and generate four labeled SVG projections plus view manifest/HTML. |
-| `environment_report` | Python/package versions and known desktop app locations; inventory only. |
+| `validate_spec SPEC [--scope schema\|build\|release]` | Strict schema, explicit unknowns, readiness. Release is always BLOCKED. |
+| `build_design SPEC --output DIR` | Smoke block, cube/sphere, compound gearbox, indicator disc, BLDC stand |
+| `inspect_geometry STEP --spec SPEC` | Independent re-inspection of an exported assembly (smoke, cube/sphere, gearbox; the stand and disc check inside their builders) |
+| `render_review MANIFEST --output DIR` | Hash-checked SVG projections (isometric, top, front, right) |
+| `environment_report` | Python/package versions and desktop app inventory |
 
-`check_interfaces`, `sweep_motion`, `prepare_print`, `package_release`, and
-`record_measurement` are **not implemented**. No printer or powered-hardware control
-exists. Reusable shaft/bearing/fastener cut tools and mounting frames live in
-`cad/interfaces/features.py`; they require explicit dimensions and compensation.
+Specs reject unknown fields, duplicate YAML keys, missing units, infeasible geometry and
+inconsistent approval metadata. `specs/finger_joint_v1.yaml` deliberately returns BLOCKED
+to show that unresolved inputs stop a build rather than getting invented.
 
-## Specifications and approval
+## Repository layout
 
-```bash
-.tools/uv/bin/uv run --locked validate_spec specs/finger_joint_v1.yaml --scope schema
-.tools/uv/bin/uv run --locked validate_spec specs/finger_joint_v1.yaml
+```
+cad/           authoritative parts and assemblies (Python, build123d)
+specs/         validated YAML design inputs
+src/mech_lab/  schema, CLI, builders, checks, review generators
+tests/         rebuilds, seeded defects, schema rejections
+components/    purchased-part registry and provenance
+measurements/  user-reported and measured values; never overwritten
+decisions/     design decision records
+docs/          status, proposals, assembly guides, print records
+validation/    software geometry policy
 ```
 
-The first command passes structural validation. The second returns **BLOCKED / 2**
-and lists missing engineering inputs. This difference is intentional. Unknown fields,
-missing units, invalid ranges, duplicate YAML keys, contradictory torques, and
-inconsistent approval metadata fail validation.
+[`docs/status.md`](docs/status.md) is the running record of what has actually been verified.
+[`AGENTS.md`](AGENTS.md) holds the operating rules the AI agent follows: keep assumptions
+proposed until approved, never invent component facts or calibrations, preserve
+measurements, and treat a development build as no authorization to print.
 
-The component registry records the selected ST3215, source drawings and Jamie's
-measurements. Gearbox trial fits/hardware are explicitly assumed under G002; purchased
-interface fit, printer profiles and calibration remain unverified. Approval metadata structure is
-validated, but identity authentication and approval-ledger reconciliation are not
-implemented. Proposed assumptions and policy must not be treated as approvals.
-All release requests remain blocked, including smoke-test release requests.
+## Status and limits
 
-## Layout
+- Motor, servo and encoder geometry comes from supplier drawings plus reported
+  measurements. Physical fit is confirmed only by printing and measuring.
+- No load ratings, no powered tests, no releases. Release packaging reports BLOCKED by design.
+- Prints so far were sent with one-off LAN scripts (status reads, FTPS upload, start command),
+  each approved by the human beforehand. No printer-control tool lives in this repo.
 
-- `cad/`: authoritative parts, assemblies, frames, and mating-feature tools.
-- `src/mech_lab/`: schema, CLI, validation, build, export, and review tooling.
-- `specs/`, `components/`, `validation/`: inputs, provenance, and proposed policy.
-- `manufacturing/`, `measurements/`, `releases/`: documented future process boundaries.
-- `tests/`: parameter rebuilds, intentionally bad geometry, schema rejection, pipeline tests.
-- `decisions/`, `docs/`: charter, decisions, commissioning status and instructions.
-- `builds/`: ignored generated artifacts and diagnostics.
+## License
 
-## Upstream references
+Free for personal, educational, research and other noncommercial use.
 
-The workflow follows [build123d installation](https://build123d.readthedocs.io/en/latest/installation.html),
-[its export/projection interfaces](https://build123d.readthedocs.io/en/latest/import_export.html),
-[uv isolated environments](https://docs.astral.sh/uv/pip/environments/), and the
-[OCP CAD Viewer project](https://github.com/bernhard-42/vscode-ocp-cad-viewer).
-The lockfile and executed reports identify the actual commissioned versions.
+- **Software** (code, CAD scripts, specs, tests, tools): [PolyForm Noncommercial 1.0.0](LICENSE)
+- **Documentation, images and designs**: [CC BY-NC-SA 4.0](LICENSE-docs)
+
+**Commercial use requires written permission.** Contact [@analogjedi](https://github.com/analogjedi).
+Third-party supplier drawings and CAD are not included, and neither license covers them.
+
+## Built with
+
+[build123d](https://github.com/gumyr/build123d) on the OpenCascade kernel ·
+[uv](https://docs.astral.sh/uv/) · [Pydantic](https://docs.pydantic.dev/) ·
+[Bambu Studio](https://github.com/bambulab/BambuStudio) CLI ·
+[OCP CAD Viewer](https://github.com/bernhard-42/vscode-ocp-cad-viewer) ·
+designed in collaboration with AI coding agents.

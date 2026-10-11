@@ -80,6 +80,11 @@ def test_mesh_zero_normalization_does_not_hide_a_hole(tmp_path):
     assert mesh_manifold(path)["status"]=="FAIL"
 
 
+VENDOR_STEP=Path("components/drawings/waveshare_st3215/ST3215.step")
+
+
+@pytest.mark.skipif(not VENDOR_STEP.exists(),
+                    reason="vendor ST3215 STEP is not redistributed; see components/drawings/README.md")
 def test_purchased_servo_keepout_roundtrip_and_horn_datums(tmp_path,spec):
     from build123d import Compound,Pos,Rot,export_step,import_step
     from cad.standard_components.servo_reference import load_servo_reference
