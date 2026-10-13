@@ -1,0 +1,108 @@
+schema_version: 1
+project_id: bldc_4015_winch_v1
+design_type: bldc_geared_winch
+release_class: kinematic_demonstrator
+length_unit: mm
+# Mounts on the printed stand through the plate's four M3 holes; reuses its geometry.
+stand_spec: specs/bldc_4015_stand_v1.yaml
+# Jamie, 2026-10-12: 9:1 two-stage spur reduction from a rotor gear to a string drum
+# lifting a hanging weight, output-shaft magnetic encoder, 8 inch (203.2 mm) drop.
+# Purchased parts are seller nominals from the shopping list; none measured yet.
+required_ratio: 9.0
+module_mm: 1.0
+pressure_angle_deg: 20.0
+tooth_thinning_mm: 0.12
+rotor_gear_teeth: 26
+stage1_gear_teeth: 78
+stage2_pinion_teeth: 23
+output_gear_teeth: 69
+stage1_face_mm: 6.0
+stage2_face_mm: 8.0
+stage1_direction_deg: -30.0
+stage2_direction_deg: 90.0
+axial_gap_mm: 2.0
+rotating_clearance_mm: 2.0
+# Rotor face: 4 x M2.5 on Ø15, 3.5 deep per drawing; project rule <= 3 mm engagement.
+rotor_screw_circle_mm: 15.0
+rotor_screw_clearance_mm: 2.9
+rotor_counterbore_diameter_mm: 5.0
+rotor_screw_length_mm: 6.0
+rotor_screw_engagement_mm: 2.5
+rotor_thread_depth_mm: 3.0
+rotor_screw_head_height_mm: 2.5
+rotor_center_hole_mm: 8.0
+# 5 mm stainless D-shaft, 100 mm, 0.5 mm flat (seller nominal).
+shaft_diameter_mm: 5.0
+shaft_flat_depth_mm: 0.5
+shaft_length_mm: 100.0
+d_bore_diametral_clearance_mm: 0.2
+spacer_bore_diametral_clearance_mm: 0.3
+spacer_outer_diameter_mm: 8.0
+race_boss_diameter_mm: 7.0
+race_boss_height_mm: 0.5
+# 625ZZ: 5 x 16 x 5 (seller nominal).
+bearing_od_mm: 16.0
+bearing_id_mm: 5.0
+bearing_width_mm: 5.0
+bearing_seat_diametral_allowance_mm: 0.1
+bearing_lip_hole_mm: 9.0
+bearing_boss_radius_mm: 12.0
+# Lower frame on the motor plate, columns up to the deck.
+frame_thickness_mm: 6.0
+frame_inner_radius_mm: 31.0
+frame_outer_radius_mm: 46.0
+column_diameter_mm: 10.0
+column_positions_mm: [[-8.0, 40.0], [-8.0, -40.0], [95.0, -20.0], [98.0, 25.0]]
+column_pilot_depth_mm: 12.0
+deck_thickness_mm: 6.0
+deck_margin_mm: 2.0
+m3_clearance_mm: 3.4
+m3_tap_pilot_mm: 2.5
+plate_screw_length_mm: 16.0
+deck_screw_length_mm: 16.0
+# M3 x 4 set screws on the shaft flats, captive M3 nuts (5.5 across flats).
+pinion_hub_diameter_mm: 16.0
+pinion_hub_height_mm: 6.0
+set_screw_length_mm: 4.0
+nut_across_flats_mm: 5.5
+nut_thickness_mm: 2.4
+nut_clearance_mm: 0.2
+nut_inner_radius_mm: 3.6
+# Drum: just under one output turn for the full drop, so a single-turn output encoder
+# reads absolute position over the whole stroke.
+drum_groove_radius_mm: 35.0
+drum_rim_radius_mm: 38.0
+drop_mm: 203.2
+drum_turn_margin: 0.05
+string_diameter_mm: 0.3
+# Pulley: 625ZZ in a printed sheave on an M5 x 20 bolt, overhanging the base +X edge.
+pulley_groove_radius_mm: 10.5
+pulley_flange_radius_mm: 13.0
+pulley_width_mm: 6.0
+pulley_x_mm: 90.0
+pulley_cheek_thickness_mm: 3.0
+pulley_side_gap_mm: 1.0
+pulley_cheek_radius_mm: 7.0
+m5_clearance_mm: 5.3
+m5_bolt_length_mm: 20.0
+m5_nut_height_mm: 4.7
+# Hanging weight envelope (hooked lab masses); assumption until the set arrives.
+weight_envelope_diameter_mm: 30.0
+weight_envelope_height_mm: 60.0
+weight_min_hang_mm: 30.0
+desk_edge_margin_mm: 5.0
+# Output encoder: 6 x 2.5 diametric magnet in a printed cap on shaft B. Board standoff
+# length (and so the magnet gap) is chosen by Jamie per board; not set here.
+magnet_diameter_mm: 6.0
+magnet_thickness_mm: 2.5
+magnet_pocket_clearance_mm: 0.1
+magnet_holder_diameter_mm: 10.0
+magnet_holder_gap_mm: 1.2
+magnet_holder_shaft_engagement_mm: 4.5
+encoder_pilot_circle_mm: 28.0
+encoder_pilot_count: 8
+encoder_pilot_mm: 2.1
+encoder_board_max_square_mm: 53.0
+encoder_envelope_height_mm: 25.0
+trial_assumptions_authorized: true
+process_compensation_mm: 0.0

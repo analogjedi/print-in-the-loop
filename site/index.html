@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>print-in-the-loop</title><link rel="icon" href="data:,">
+<style>
+:root{--bg:#e9edf1;--panel:#fff;--ink:#172b3a;--muted:#536777;--line:#cbd5df;--link:#1f5f99;--pill:#e9f0f6}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14191e;--panel:#1c232a;--ink:#e3e9ee;--muted:#9aaab6;--line:#2d3741;--link:#7fb5e6;--pill:#26313b}}
+:root[data-theme="dark"]{--bg:#14191e;--panel:#1c232a;--ink:#e3e9ee;--muted:#9aaab6;--line:#2d3741;--link:#7fb5e6;--pill:#26313b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui}
+main{max-width:860px;margin:0 auto;padding:32px 16px}h1{font-size:26px;margin:0 0 6px}h2{font-size:19px;margin:0 0 6px}
+p{color:var(--muted);margin:0 0 12px}a{color:var(--link)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px;margin-top:22px}
+.card img{width:100%;height:auto;border-radius:6px;border:1px solid var(--line);margin-bottom:12px}
+.pill{display:inline-block;padding:3px 9px;background:var(--pill);border-radius:4px;font-size:13px;color:var(--muted)}
+</style>
+<main>
+<h1>print-in-the-loop</h1>
+<p>Agent-driven parametric CAD for 3D printing: designs written as Python, proved with automated
+geometry checks, reviewed in an interactive 3D page, then printed and measured.
+Source, specs and checks: <a href="https://github.com/analogjedi/print-in-the-loop">github.com/analogjedi/print-in-the-loop</a>.</p>
+
+<section class="card">
+<a href="winch/"><img src="winch-lifted.png" alt="Geared string winch on the BLDC motor stand, weight lifted to the pulley" width="1400" height="950"></a>
+<h2><a href="winch/">Geared string winch for the BLDC stand</a></h2>
+<p>A 9:1 two-stage spur train (26→78, 23→69) from a gear on the motor's rotor to a string drum.
+It lifts a hanging weight 203.2 mm in 0.92 of an output turn, so a single-turn encoder on the output
+reads the weight's position absolutely. Press <strong>Run winch</strong>, drag the Lift slider, or use the cutaway.</p>
+<span class="pill">Development model · not load rated · physical fit unverified · about 7 MB, needs WebGL</span>
+</section>
+</main></html>

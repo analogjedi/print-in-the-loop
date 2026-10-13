@@ -29,6 +29,35 @@ of being guessed, and nothing gets printed without the human saying so.
 
 ## What's been built
 
+### Geared string winch for the BLDC stand · *CAD complete*
+
+**[▶ Open the interactive 3D review](https://analogjedi.github.io/print-in-the-loop/winch/)**:
+run the winch, drag the weight up, cut it open. It's about 7 MB and needs WebGL.
+
+<p align="center">
+  <img src="docs/images/winch-lifted.png" width="49%" alt="Winch on the motor stand: deck with pulley overhanging the base edge, weight lifted to the pulley">
+  <img src="docs/images/winch-no-deck.png" width="49%" alt="Winch with the deck hidden: rotor gear, 78T/23T compound gear and the 69T gear with its string drum">
+</p>
+
+A controlled torque load for developing a motor driver on the stand below. A 26T gear screws
+to the motor's rotor and drives a 9:1 two-stage spur train (26→78, 23→69) to a Ø70 string
+drum, which lifts a hanging weight over a pulley that overhangs the base edge.
+
+- **Absolute output position.** The 8 inch (203.2 mm) drop takes 0.92 of an output turn,
+  so a single-turn magnetic encoder on the output shaft knows where the weight is without
+  homing. The motor encoder sees about 8.3 turns; comparing the two shows the backlash.
+- **Bolts onto the existing stand.** The frame uses the motor plate's four M3 holes with
+  longer screws; nothing on the printed stand changes. Bearings are 625ZZ on 5 mm D-shafts.
+- **Load is about 38 mN·m at the motor per kg hanging,** before friction. The printed teeth
+  are not load rated, so a driver current limit comes first.
+- **365 automated checks.** Both meshes are swept through a full pinion tooth (contact ratios
+  1.72 and 1.70) and a seeded quarter-pitch phase error has to fail. Every rotating part has to
+  stay inside its rotation envelope with 1 mm clearance to fixed parts and other axes, and the
+  string and weight must stay clear over the whole travel. Screw engagement is checked too.
+- 10 printed parts, no supports. Not sliced or printed yet.
+
+[Design notes, BOM and assembly →](docs/bldc_winch_design.md)
+
 ### Face-up BLDC motor evaluation stand · *printed*
 
 <p align="center"><img src="docs/images/stand-printed.jpg" width="70%" alt="The printed stand on the P2S plate: black tower and base with a pointed window, and the slotted motor plate beside it"></p>
@@ -117,7 +146,7 @@ Requires Python 3.12. Commissioned on native arm64 macOS; other platforms are un
 python3.12 -m venv .tools/uv
 .tools/uv/bin/python -m pip install --disable-pip-version-check --no-cache-dir uv==0.12.10
 .tools/uv/bin/uv sync --locked
-.tools/uv/bin/uv run --locked pytest -q          # 75 tests, about a minute
+.tools/uv/bin/uv run --locked pytest -q          # 92 tests, about three minutes
 ```
 
 If `uv` is already installed, use it in place of `.tools/uv/bin/uv`. Build a design into a
@@ -129,6 +158,9 @@ open builds/my-stand/review.html                  # orbit, cutaway, explode, spi
 
 uv run --locked build_design specs/gearbox_v1.yaml --output builds/my-gearbox --timeout 600
 open builds/my-gearbox/review.html                # animated 27:1 gear train + BOM
+
+uv run --locked build_design specs/bldc_4015_winch_v1.yaml --output builds/my-winch
+open builds/my-winch/review.html                  # run the 9:1 winch, lift slider, cutaway
 ```
 
 The gearbox build needs Waveshare's ST3215 STEP, which isn't redistributed here. Download it
@@ -146,8 +178,8 @@ Every command emits JSON plus a short summary. Exit codes: **0 PASS · 1 FAIL ·
 | Command | Scope |
 |---|---|
 | `validate_spec SPEC [--scope schema\|build\|release]` | Strict schema, explicit unknowns, readiness. Release is always BLOCKED. |
-| `build_design SPEC --output DIR` | Smoke block, cube/sphere, compound gearbox, indicator disc, BLDC stand |
-| `inspect_geometry STEP --spec SPEC` | Independent re-inspection of an exported assembly (smoke, cube/sphere, gearbox; the stand and disc check inside their builders) |
+| `build_design SPEC --output DIR` | Smoke block, cube/sphere, compound gearbox, indicator disc, BLDC stand, BLDC winch |
+| `inspect_geometry STEP --spec SPEC` | Independent re-inspection of an exported assembly (smoke, cube/sphere, gearbox; the stand, disc and winch check inside their builders) |
 | `render_review MANIFEST --output DIR` | Hash-checked SVG projections (isometric, top, front, right) |
 | `environment_report` | Python/package versions and desktop app inventory |
 

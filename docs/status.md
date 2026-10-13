@@ -6,7 +6,13 @@ then [October 11 first print](first_print_gear2.md). Proposed next project:
 uses the other hole pair, so either board fits); v1 CAD built (`specs/bldc_4015_stand_v1.yaml`,
 84 checks PASS, 75 tests pass, interactive review in `builds/bldc-stand-v4/review.html`);
 sliced at 2 h 16 min, 99.7 g; printed 13:04–15:29 in black PLA, completed with no error;
-physical fit not yet checked. The rotor indicator disc
+physical fit not yet checked; Jamie reports the whole assembly worked. Next: a
+[geared string winch](bldc_winch_design.md) as a controlled torque load — 9:1, output encoder,
+203.2 mm drop (`specs/bldc_4015_winch_v1.yaml`); v1 CAD built in `builds/bldc-winch-v2/`,
+365 checks PASS, 92 tests pass; purchased parts not yet measured, not sliced or printed,
+teeth not load rated. Its review page is published with GitHub Pages at
+https://analogjedi.github.io/print-in-the-loop/winch/ (copied into `site/`; see `site/README.md`).
+The rotor indicator disc
 (`specs/indicator_disc_v1.yaml`) is built but on hold for a second motor type.
 Jamie reports enabling Terminal Accessibility; the subsequent check in the existing
 session still returned `false`. Relaunch and recheck before resuming GUI commissioning.

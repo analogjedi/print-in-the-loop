@@ -330,7 +330,186 @@ class BldcStandSpec(Model):
         return self
 
 
-SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec | GearboxSpec | IndicatorDiscSpec | BldcStandSpec,
+class BldcWinchSpec(Model):
+    """Geared string winch on the BLDC stand: rotor gear, two shafts, drum, pulley, weight."""
+    schema_version: Literal[1]
+    project_id: Identifier
+    design_type: Literal["bldc_geared_winch"]
+    release_class: Literal["kinematic_demonstrator"]
+    length_unit: Literal["mm"]
+    stand_spec: Annotated[str, Field(pattern=r"^specs/[a-zA-Z0-9_.-]+\.yaml$")]
+    required_ratio: Positive
+    module_mm: Positive
+    pressure_angle_deg: Positive
+    tooth_thinning_mm: Positive
+    rotor_gear_teeth: Annotated[int, Field(ge=20, strict=True)]
+    stage1_gear_teeth: Annotated[int, Field(ge=20, strict=True)]
+    stage2_pinion_teeth: Annotated[int, Field(ge=20, strict=True)]
+    output_gear_teeth: Annotated[int, Field(ge=20, strict=True)]
+    stage1_face_mm: Positive
+    stage2_face_mm: Positive
+    stage1_direction_deg: Finite
+    stage2_direction_deg: Finite
+    axial_gap_mm: Positive
+    rotating_clearance_mm: Positive
+    rotor_screw_circle_mm: Positive
+    rotor_screw_clearance_mm: Positive
+    rotor_counterbore_diameter_mm: Positive
+    rotor_screw_length_mm: Positive
+    rotor_screw_engagement_mm: Positive
+    rotor_thread_depth_mm: Positive
+    rotor_screw_head_height_mm: Positive
+    rotor_center_hole_mm: Positive
+    shaft_diameter_mm: Positive
+    shaft_flat_depth_mm: Positive
+    shaft_length_mm: Positive
+    d_bore_diametral_clearance_mm: Positive
+    spacer_bore_diametral_clearance_mm: Positive
+    spacer_outer_diameter_mm: Positive
+    race_boss_diameter_mm: Positive
+    race_boss_height_mm: Positive
+    bearing_od_mm: Positive
+    bearing_id_mm: Positive
+    bearing_width_mm: Positive
+    bearing_seat_diametral_allowance_mm: Nonnegative
+    bearing_lip_hole_mm: Positive
+    bearing_boss_radius_mm: Positive
+    frame_thickness_mm: Positive
+    frame_inner_radius_mm: Positive
+    frame_outer_radius_mm: Positive
+    column_diameter_mm: Positive
+    column_positions_mm: list[Annotated[list[Finite], Field(min_length=2, max_length=2)]]
+    column_pilot_depth_mm: Positive
+    deck_thickness_mm: Positive
+    deck_margin_mm: Positive
+    m3_clearance_mm: Positive
+    m3_tap_pilot_mm: Positive
+    plate_screw_length_mm: Positive
+    deck_screw_length_mm: Positive
+    pinion_hub_diameter_mm: Positive
+    pinion_hub_height_mm: Positive
+    set_screw_length_mm: Positive
+    nut_across_flats_mm: Positive
+    nut_thickness_mm: Positive
+    nut_clearance_mm: Positive
+    nut_inner_radius_mm: Positive
+    drum_groove_radius_mm: Positive
+    drum_rim_radius_mm: Positive
+    drop_mm: Positive
+    drum_turn_margin: Annotated[float, Field(ge=0, lt=0.5, strict=True)]
+    string_diameter_mm: Positive
+    pulley_groove_radius_mm: Positive
+    pulley_flange_radius_mm: Positive
+    pulley_width_mm: Positive
+    pulley_x_mm: Finite
+    pulley_cheek_thickness_mm: Positive
+    pulley_side_gap_mm: Positive
+    pulley_cheek_radius_mm: Positive
+    m5_clearance_mm: Positive
+    m5_bolt_length_mm: Positive
+    m5_nut_height_mm: Positive
+    weight_envelope_diameter_mm: Positive
+    weight_envelope_height_mm: Positive
+    weight_min_hang_mm: Positive
+    desk_edge_margin_mm: Nonnegative
+    magnet_diameter_mm: Positive
+    magnet_thickness_mm: Positive
+    magnet_pocket_clearance_mm: Positive
+    magnet_holder_diameter_mm: Positive
+    magnet_holder_gap_mm: Positive
+    magnet_holder_shaft_engagement_mm: Positive
+    encoder_pilot_circle_mm: Positive
+    encoder_pilot_count: Annotated[int, Field(ge=2, le=12, strict=True)]
+    encoder_pilot_mm: Positive
+    encoder_board_max_square_mm: Positive
+    encoder_envelope_height_mm: Positive
+    trial_assumptions_authorized: Literal[True]
+    process_compensation_mm: Literal[0.0]
+
+    @property
+    def ratio(self):
+        return (self.stage1_gear_teeth / self.rotor_gear_teeth) * (self.output_gear_teeth / self.stage2_pinion_teeth)
+
+    @model_validator(mode="after")
+    def feasible_winch(self):
+        m = self.module_mm
+        if not math.isclose(self.ratio, self.required_ratio, rel_tol=1e-12):
+            raise ValueError(f"tooth counts give {self.ratio:g}:1, not the required {self.required_ratio:g}:1")
+        if self.rotor_gear_teeth >= self.stage1_gear_teeth or self.stage2_pinion_teeth >= self.output_gear_teeth:
+            raise ValueError("both stages must reduce speed")
+        if not 0 < self.tooth_thinning_mm < 0.3 or not 14 <= self.pressure_angle_deg <= 25:
+            raise ValueError("trial tooth thinning must be 0-0.3 mm and pressure angle 14-25 degrees")
+        root = m * (self.rotor_gear_teeth / 2 - 1.25)
+        if root - (self.rotor_screw_circle_mm + self.rotor_counterbore_diameter_mm) / 2 < 1.0:
+            raise ValueError("rotor screw counterbores must stay 1 mm inside the rotor gear tooth roots")
+        if self.rotor_center_hole_mm / 2 + 1.0 > (self.rotor_screw_circle_mm - self.rotor_counterbore_diameter_mm) / 2:
+            raise ValueError("rotor center hole would break into the counterbores")
+        if not 0 < self.rotor_screw_engagement_mm <= self.rotor_thread_depth_mm:
+            raise ValueError("rotor screw must engage without exceeding the thread depth")
+        clamp = self.rotor_screw_length_mm - self.rotor_screw_engagement_mm
+        if clamp < 1.5 or self.axial_gap_mm + self.stage1_face_mm - clamp < self.rotor_screw_head_height_mm:
+            raise ValueError("rotor gear must leave 1.5 mm under the screw head and room to sink the head")
+        if not 2.6 <= self.rotor_screw_clearance_mm <= 3.2 or self.rotor_counterbore_diameter_mm < 4.8:
+            raise ValueError("invalid M2.5 clearance or counterbore")
+        cd2 = m * (self.stage2_pinion_teeth + self.output_gear_teeth) / 2
+        tip78 = m * (self.stage1_gear_teeth / 2 + 1)
+        if cd2 - tip78 - self.spacer_outer_diameter_mm / 2 < self.rotating_clearance_mm:
+            raise ValueError("output shaft spacer passes too close to the stage-1 gear tips")
+        if not self.shaft_flat_depth_mm < self.shaft_diameter_mm / 4:
+            raise ValueError("D-flat too deep")
+        if not self.shaft_diameter_mm + 1.0 <= self.race_boss_diameter_mm <= self.bearing_od_mm - 6.0:
+            raise ValueError("race bosses must bear on the inner race only")
+        if not self.shaft_diameter_mm + 1.0 < self.bearing_lip_hole_mm < self.bearing_od_mm - 2.0:
+            raise ValueError("bearing lip must clear the inner race and still hold the outer race")
+        if self.bearing_id_mm != self.shaft_diameter_mm:
+            raise ValueError("bearing bore must match the shaft")
+        if self.bearing_width_mm >= self.frame_thickness_mm or self.bearing_width_mm >= self.deck_thickness_mm:
+            raise ValueError("bearing seats need a lip below the frame and above the deck")
+        if self.bearing_boss_radius_mm < self.bearing_od_mm / 2 + 2.0:
+            raise ValueError("bearing bosses need 2 mm of wall")
+        if self.frame_inner_radius_mm >= self.frame_outer_radius_mm:
+            raise ValueError("frame ring is inverted")
+        hub_r = self.pinion_hub_diameter_mm / 2
+        corner = self.nut_across_flats_mm / math.cos(math.radians(30)) + self.nut_clearance_mm
+        outer = self.nut_inner_radius_mm + self.nut_thickness_mm + self.nut_clearance_mm
+        if self.nut_inner_radius_mm - (self.shaft_diameter_mm + self.d_bore_diametral_clearance_mm) / 2 < 0.8:
+            raise ValueError("nut slot must leave 0.8 mm beside the bore")
+        if math.sqrt(hub_r ** 2 - (corner / 2) ** 2) - outer < 0.8:
+            raise ValueError("pinion hub must leave 0.8 mm outside the nut slot")
+        flat = self.shaft_diameter_mm / 2 - self.shaft_flat_depth_mm
+        if not self.nut_inner_radius_mm < flat + self.set_screw_length_mm <= outer:
+            raise ValueError("set screw must reach into the nut without passing it")
+        root69 = m * (self.output_gear_teeth / 2 - 1.25)
+        r_mid = cd2 - hub_r - self.rotating_clearance_mm
+        if not root69 - 1.0 < r_mid < self.drum_rim_radius_mm:
+            raise ValueError("drum waist must lie between the output gear root and the rim")
+        if not self.pulley_groove_radius_mm < self.drum_groove_radius_mm < self.drum_rim_radius_mm:
+            raise ValueError("drum groove must be inside the rim")
+        r_eff = self.drum_groove_radius_mm + self.string_diameter_mm / 2
+        if self.drop_mm > (1 - self.drum_turn_margin) * 2 * math.pi * r_eff:
+            raise ValueError("the full drop must take less than one output turn")
+        if self.pulley_groove_radius_mm < self.bearing_od_mm / 2 + 2.0 or self.pulley_flange_radius_mm <= self.pulley_groove_radius_mm:
+            raise ValueError("pulley groove must leave 2 mm over the bearing and sit below the flanges")
+        if self.pulley_width_mm <= self.bearing_width_mm:
+            raise ValueError("pulley must be wider than its bearing")
+        grip = 2 * (self.pulley_cheek_thickness_mm + self.pulley_side_gap_mm) + self.pulley_width_mm
+        if self.m5_bolt_length_mm < grip + self.m5_nut_height_mm:
+            raise ValueError("M5 bolt too short for the pulley fork and nut")
+        if not 3.1 <= self.m3_clearance_mm <= 3.6 or not 2.3 <= self.m3_tap_pilot_mm <= 2.6 or not 5.1 <= self.m5_clearance_mm <= 5.6:
+            raise ValueError("invalid trial screw clearances")
+        if self.deck_screw_length_mm - self.deck_thickness_mm > self.column_pilot_depth_mm - 1.0:
+            raise ValueError("deck screws would bottom in the column pilots")
+        if len(self.column_positions_mm) < 3:
+            raise ValueError("the deck needs at least three columns")
+        if self.magnet_holder_diameter_mm < self.magnet_diameter_mm + 2.0 or self.magnet_holder_diameter_mm > self.bearing_lip_hole_mm + 4:
+            raise ValueError("magnet holder wall too thin or too wide")
+        if self.encoder_pilot_circle_mm / 2 - self.encoder_pilot_mm / 2 < self.bearing_od_mm / 2 + 1.5:
+            raise ValueError("encoder pilots must clear the output bearing seat")
+        return self
+
+
+SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec | GearboxSpec | IndicatorDiscSpec | BldcStandSpec
+                             | BldcWinchSpec,
                              Field(discriminator="design_type")])
 
 
@@ -387,6 +566,8 @@ def readiness(spec, scope):
             blockers.append("gearbox trial fits, servo attachment, material and physical tests are unverified")
         elif isinstance(spec, BldcStandSpec):
             blockers.append("stand clearances use supplier nominals and Jamie's approximate encoder stack; physical fit unverified")
+        elif isinstance(spec, BldcWinchSpec):
+            blockers.append("winch gears, bearings, shafts and string are seller nominals; tooth strength is not rated; physical fit unverified")
         elif isinstance(spec, IndicatorDiscSpec):
             blockers.append("indicator disc screw fit and rotor hole pattern are supplier nominals, not measured")
         elif isinstance(spec, (SmokeSpec, CubeSphereSpec)):

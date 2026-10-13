@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLDC winch review</title><link rel="icon" href="data:,">
+<style>
+:root{--bg:#e9edf1;--panel:#fff;--bar:#f8fafc;--ink:#172b3a;--muted:#536777;--line:#cbd5df;--btn:#fff;--btn-line:#9aabb8;--pill:#e9f0f6}
+@media(prefers-color-scheme:dark){:root{--bg:#14191e;--panel:#1c232a;--bar:#192026;--ink:#e3e9ee;--muted:#9aaab6;--line:#2d3741;--btn:#222b33;--btn-line:#46525e;--pill:#26313b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui}
+header{padding:18px 24px;background:var(--panel);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:21px;margin:0 0 4px}p{margin:0;color:var(--muted)}
+button{border:1px solid var(--btn-line);border-radius:5px;padding:7px 13px;background:var(--btn);color:var(--ink);cursor:pointer}
+nav{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 24px;background:var(--bar);border-bottom:1px solid var(--line)}
+canvas{display:block;width:100%;height:calc(100vh - 190px);min-height:380px;touch-action:none}
+footer{padding:10px 24px;font-size:13px;background:var(--panel);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pill{padding:5px 10px;background:var(--pill);border-radius:4px;font-size:13px}#error{color:#c33;padding:10px}
+</style>
+<header><div><h1>Geared string winch on the BLDC stand</h1><p>__TITLE__</p></div><span class="pill">Development model · not load rated · physical fit unverified</span></header>
+<nav><button id="reset">Reset view</button><button id="front">Front</button><button id="top">Top</button><button id="run">Run winch</button>
+<label>Lift <input id="lift" type="range" min="0" max="1" step="0.001" value="0"></label>
+<label><input id="cut" type="checkbox"> Cutaway (y &lt; B)</label>
+<label><input id="g-stand" type="checkbox" checked> Stand</label>
+<label><input id="g-motor" type="checkbox" checked> Motor</label>
+<label><input id="g-hardware" type="checkbox" checked> Hardware</label>
+<label><input id="g-load" type="checkbox" checked> String + weight</label>
+<label><input id="g-deck" type="checkbox" checked> Deck</label></nav>
+<div id="error" hidden></div><canvas id="view" aria-label="Interactive 3D winch assembly"></canvas>
+<footer><span id="info">Loading CAD meshes…</span><span>Drag to orbit · scroll to zoom · purchased parts are seller-nominal envelopes</span></footer>
+<script>
+const meshData=__MESH_DATA__, motion=__MOTION__;
+const canvas=document.querySelector('#view'),gl=canvas.getContext('webgl',{antialias:true,preserveDrawingBuffer:true});
+const error=document.querySelector('#error');
+if(!gl){error.hidden=false;error.textContent='WebGL is unavailable; open the assembly STEP in FreeCAD instead.';throw Error('WebGL unavailable')}
+const VIEW0={yaw:-.75,pitch:1.1,scale:120};let {yaw,pitch,scale}=VIEW0,run=false,dir=1,last=0,drag=null;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+// Each mesh turns about its own axis: vertical through (axc.x, axc.y), or along Y through (axc.x, axc.z).
+const vs=shader(gl.VERTEX_SHADER,`attribute vec3 p;attribute vec3 n;uniform vec3 col;uniform float rot;uniform float ay;uniform vec3 axc;uniform float slide;uniform vec3 ctr;uniform float yaw;uniform float pitch;uniform float scale;uniform float aspect;varying vec3 color;varying vec3 world;
+void main(){float c=cos(rot),s=sin(rot);vec3 q=p-axc;vec3 nn;
+if(ay>.5){q=vec3(c*q.x+s*q.z,q.y,-s*q.x+c*q.z);nn=vec3(c*n.x+s*n.z,n.y,-s*n.x+c*n.z);}else{q=vec3(c*q.x-s*q.y,s*q.x+c*q.y,q.z);nn=vec3(c*n.x-s*n.y,s*n.x+c*n.y,n.z);}
+q+=axc;q.z+=slide;world=q;q-=ctr;float x=cos(yaw)*q.x-sin(yaw)*q.y;float y=sin(yaw)*q.x+cos(yaw)*q.y;float sy=cos(pitch)*y+sin(pitch)*q.z;float d=cos(pitch)*q.z-sin(pitch)*y;
+gl_Position=vec4(x/(scale*aspect),sy/scale,-d/600.,1.);color=col*(.38+.62*abs(dot(normalize(nn),normalize(vec3(.3,-.55,1.)))));}`);
+const fs=shader(gl.FRAGMENT_SHADER,`precision mediump float;varying vec3 color;varying vec3 world;uniform float cut;uniform float cuty;uniform float clipz;void main(){if(cut>.5&&world.y<cuty)discard;if(world.z<clipz)discard;gl_FragColor=vec4(color,1.);}`);
+const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+const U={};for(const k of ['col','rot','ay','axc','slide','ctr','yaw','pitch','scale','aspect','cut','cuty','clipz'])U[k]=gl.getUniformLocation(prog,k);
+const pa=gl.getAttribLocation(prog,'p'),na=gl.getAttribLocation(prog,'n');gl.enableVertexAttribArray(pa);gl.enableVertexAttribArray(na);gl.enable(gl.DEPTH_TEST);
+const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
+const meshes=meshData.map(m=>{const raw=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0));const dv=new DataView(raw.buffer),count=dv.getUint32(80,true),out=new Float32Array(count*18);
+for(let i=0;i<count;i++){const at=84+i*50;for(let j=0;j<3;j++)for(let k=0;k<3;k++){const v=dv.getFloat32(at+12+j*12+k*4,true);out[i*18+j*6+k]=v;if(m.group!=='load'){lo[k]=Math.min(lo[k],v);hi[k]=Math.max(hi[k],v)}out[i*18+j*6+3+k]=dv.getFloat32(at+k*4,true)}}
+const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);return {...m,data:undefined,buffer,count:count*3}});
+const ctr=lo.map((v,i)=>(v+hi[i])/2);
+const outB=meshes.find(m=>m.name==='output_gear_69t_drum');const cuty=outB?outB.center[1]:0;
+const $=id=>document.querySelector(id);
+// Motor angle (rad) for a lift fraction: output turns lift/r_eff, motor turns ratio times that.
+const maxMotor=motion.ratio*motion.drop_mm/motion.r_eff_mm;
+$('#reset').onclick=()=>{({yaw,pitch,scale}=VIEW0)};$('#top').onclick=()=>{yaw=0;pitch=0;scale=110};$('#front').onclick=()=>{yaw=0;pitch=Math.PI/2;scale=110};
+$('#run').onclick=()=>{run=!run;$('#run').textContent=run?'Stop':'Run winch'};
+canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId)};
+canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.008;pitch=Math.max(-1.6,Math.min(1.6,pitch+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY]};canvas.onpointerup=()=>drag=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();scale=Math.max(25,Math.min(400,scale*Math.exp(e.deltaY*.001)))},{passive:false});
+const dark=matchMedia('(prefers-color-scheme: dark)');
+function draw(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;const lift=$('#lift');
+if(run){let f=+lift.value+dir*dt/8;if(f>=1){f=1;dir=-1}if(f<=0){f=0;dir=1}lift.value=f}
+const frac=+lift.value,phi=frac*maxMotor;
+const w=Math.round(canvas.clientWidth*devicePixelRatio),h=Math.round(canvas.clientHeight*devicePixelRatio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+gl.viewport(0,0,w,h);const bg=dark.matches?[.08,.1,.12]:[.91,.93,.95];gl.clearColor(...bg,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+gl.uniform1f(U.yaw,yaw);gl.uniform1f(U.pitch,pitch);gl.uniform1f(U.scale,scale);gl.uniform1f(U.aspect,w/h);gl.uniform3fv(U.ctr,ctr);gl.uniform1f(U.cut,$('#cut').checked?1:0);gl.uniform1f(U.cuty,cuty);
+let shown=0;
+for(const m of meshes){const box=$('#g-'+(m.name==='winch_deck'?'deck':m.group));if(box&&!box.checked)continue;shown++;
+gl.bindBuffer(gl.ARRAY_BUFFER,m.buffer);gl.vertexAttribPointer(pa,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(na,3,gl.FLOAT,false,24,12);
+gl.uniform3fv(U.col,m.color);gl.uniform1f(U.rot,m.axis?phi*m.rate:0);gl.uniform1f(U.ay,m.axis==='y'?1:0);
+gl.uniform3fv(U.axc,m.axis==='y'?[m.center[0],m.center[1],m.center_z]:[m.center[0],m.center[1],0]);
+gl.uniform1f(U.slide,m.slide?frac*motion.drop_mm:0);gl.uniform1f(U.clipz,m.clip_z!=null?m.clip_z+frac*motion.drop_mm:-1e9);gl.drawArrays(gl.TRIANGLES,0,m.count)}
+$('#info').textContent=`${shown} meshes · motor ${(phi*180/Math.PI).toFixed(0)}° · output ${(phi/motion.ratio*180/Math.PI).toFixed(1)}° · weight lifted ${(frac*motion.drop_mm).toFixed(1)} mm`;
+window.winchReview={ready:true,meshCount:meshes.length,shown,frac,webglError:gl.getError()};requestAnimationFrame(draw)}requestAnimationFrame(draw);
+</script></html>
