@@ -12,6 +12,17 @@ physical fit not yet checked; Jamie reports the whole assembly worked. Next: a
 365 checks PASS, 92 tests pass; purchased parts not yet measured, not sliced or printed,
 teeth not load rated. Its review page is published with GitHub Pages at
 https://analogjedi.github.io/print-in-the-loop/winch/ (copied into `site/`; see `site/README.md`).
+A second motor plate for the same tower holds a [2804 outrunner](bldc_2804_plate_design.md)
+with its AS5600 kit by the stator ring (pocket, crush ribs, pin in the Ø2 locating hole; no
+screws into the stator face); `specs/bldc_2804_plate_v1.yaml`, built in `builds/bldc-2804-plate-v2/`,
+79 checks PASS, 110 tests pass; printed October 27 in white PLA (29 min, 16.8 g, no errors),
+second white tower printed the same evening (1 h 56 min, 86 g, no errors) so both motors stay mounted. October 28: Jamie reports the motor fits the pocket
+and the pin goes into the locating hole with some force; rib grip and the kit's board spacing are not yet reported.
+A [degree dial](bldc_2804_dial_design.md) for the 2804 rotor (Ø110 white, red inlaid 0–360° scale, red
+pointer on a plate screw; `specs/bldc_2804_dial_v1.yaml`, `builds/bldc-2804-dial-v1/`, 332 checks PASS) is
+being printed October 28 in white with black markings instead of red: the dial finished with no errors
+(52 min, 24.8 g + 0.9 g) and Jamie reports it printed perfectly; the pointer (12 min, 1.3 g) is printing
+after it; 128 tests pass.
 The rotor indicator disc
 (`specs/indicator_disc_v1.yaml`) is built but on hold for a second motor type.
 Jamie reports enabling Terminal Accessibility; the subsequent check in the existing

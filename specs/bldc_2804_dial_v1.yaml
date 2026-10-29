@@ -1,0 +1,68 @@
+schema_version: 1
+project_id: bldc_2804_dial_v1
+design_type: rotor_dial
+release_class: kinematic_demonstrator
+length_unit: mm
+# Jamie, 2026-10-28: white degree dial with red markings on the 2804 rotor, overhanging the
+# Ø90 plate (Ø110 chosen over a dial inside the plate), degrees only, plus a fixed pointer.
+# The motor, plate and tower come from the plate spec (Z=0 at the stator face, rotor up).
+plate_spec: specs/bldc_2804_plate_v1.yaml
+# Rotor face (supplier drawing, components/drawings/bldc_2804): 4 x M2.5 on Ø16 on the axes,
+# screw depth not to exceed 3 mm; hollow shaft flush with the face. Nominals, not measured.
+rotor_hole_circle_mm: 16.0
+rotor_hole_angles_deg: [0.0, 90.0, 180.0, 270.0]
+rotor_thread_depth_mm: 3.0
+# Dial: Ø110 x 3.5, with a 1 mm step underneath that drops over the rotor rim to center it.
+dial_diameter_mm: 110.0
+dial_thickness_mm: 3.5
+rotor_recess_depth_mm: 1.0
+rotor_recess_diametral_clearance_mm: 0.3
+center_hole_mm: 8.0
+# M2.5 x 5 countersunk (90 degree) screws through the 2.5 mm hub: 2.5 mm into the rotor.
+screw_clearance_mm: 2.9
+countersink_diameter_mm: 5.0
+dial_screw_length_mm: 5.0
+# Red inlay, flush with the top face; the dial prints face down so the scale is on the bed.
+inlay_depth_mm: 0.6
+# Numbers increase clockwise seen from above, like a clock face; zero sits on the +Y rotor hole.
+scale_direction: clockwise
+zero_angle_deg: 90.0
+tick_outer_inset_mm: 0.8
+minor_tick_step_deg: 5.0
+minor_tick_length_mm: 3.0
+minor_tick_width_mm: 0.6
+mid_tick_step_deg: 10.0
+mid_tick_length_mm: 5.0
+mid_tick_width_mm: 0.8
+major_tick_step_deg: 30.0
+major_tick_length_mm: 7.0
+major_tick_width_mm: 1.2
+label_step_deg: 30.0
+label_radius_mm: 42.0
+label_font_size_mm: 8.0
+font_path: /System/Library/Fonts/Supplemental/Arial Bold.ttf
+zero_marker_radius_mm: 33.0
+zero_marker_size_mm: 6.0
+min_feature_mm: 0.5
+# Fixed pointer, printed in red: clamped under the plate's M3 screw at 315 degrees (front
+# right), a lip hooks the plate rim so it cannot swing, and a riser ends level with the dial
+# face just outside its rim. Jamie's existing M3 x 10 goes through a counterbore.
+pointer_screw_angle_deg: 315.0
+pointer_arm_thickness_mm: 3.0
+pointer_width_mm: 10.0
+pointer_arm_inner_radius_mm: 37.0
+pointer_counterbore_mm: 6.0
+pointer_floor_under_head_mm: 1.0
+pointer_screw_length_mm: 10.0
+pointer_gap_to_dial_mm: 1.5
+pointer_tip_length_mm: 4.0
+pointer_riser_thickness_mm: 4.0
+pointer_lip_clearance_mm: 0.2
+pointer_lip_thickness_mm: 2.0
+pointer_lip_depth_mm: 6.0
+m3_head_diameter_mm: 5.5
+m3_head_height_mm: 3.0
+# Nothing fixed may come within 1 mm of the turning dial.
+rotating_clearance_mm: 1.0
+trial_assumptions_authorized: true
+process_compensation_mm: 0.0

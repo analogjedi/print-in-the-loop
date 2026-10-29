@@ -10,6 +10,7 @@ SHA-256, so a downloaded copy can be verified byte for byte.
 | `waveshare_st3215/` (Feetech) | [ST-3215-C018 datasheet](https://www.feetechrc.com/Data/feetechrc/upload/file/20240507/6385067068652648096680943.pdf) | Reference only |
 | `bldc_4015/` | Seller listing for the "4015 brushless DC motor, 24N22P, hollow shaft, MT6701 encoder" (URL not recorded) | Reference only; dimensions used are written into `specs/bldc_4015_stand_v1.yaml` and `docs/bldc_4015_stand_proposal.md` |
 | `as5600_encoder_board/` | Seller listing for the 33 × 33 mm AS5600 magnetic encoder board (URL not recorded) | Reference only |
+| `bldc_2804/` | Seller listing for the "2804 hollow shaft outrunner BLDC with AS5600 encoder kit" (drawings credited to M Creative Workshop; URL not recorded) | Reference only; dimensions used are written into `specs/bldc_2804_plate_v1.yaml` and `docs/bldc_2804_plate_design.md` |
 
 To build the gearbox, place `ST3215.step` at `components/drawings/waveshare_st3215/ST3215.step`.
 Its SHA-256 must match `58e38e4dc49f97df738c5f229f9aa8a7dce64a0a1d01335486a52d53e6017e8a`.

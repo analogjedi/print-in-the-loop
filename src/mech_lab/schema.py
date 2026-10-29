@@ -330,6 +330,187 @@ class BldcStandSpec(Model):
         return self
 
 
+class BldcPinnedPlateSpec(Model):
+    """Motor plate for the existing stand tower that grips a stator ring and pins its locating hole."""
+    schema_version: Literal[1]
+    project_id: Identifier
+    design_type: Literal["bldc_pinned_plate"]
+    release_class: Literal["kinematic_demonstrator"]
+    length_unit: Literal["mm"]
+    stand_spec: Annotated[str, Field(pattern=r"^specs/[a-zA-Z0-9_.-]+\.yaml$")]
+    motor_reference: Annotated[str, Field(min_length=1)]
+    motor_diameter_mm: Positive
+    motor_body_height_mm: Positive
+    motor_stationary_height_mm: Positive
+    motor_boss_diameter_mm: Positive
+    motor_boss_height_mm: Positive
+    shaft_bore_mm: Positive
+    stator_hole_circle_mm: Positive
+    stator_thread_depth_mm: Positive
+    locating_hole_diameter_mm: Positive
+    locating_hole_depth_mm: Positive
+    locating_hole_radius_mm: Positive
+    locating_hole_angle_deg: float
+    lead_angle_deg: float
+    plate_diameter_mm: Positive
+    floor_thickness_mm: Positive
+    pocket_depth_mm: Positive
+    pocket_diametral_clearance_mm: Positive
+    center_opening_mm: Positive
+    pin_diameter_mm: Positive
+    pin_height_mm: Positive
+    pin_tab_width_mm: Positive
+    pin_tab_inner_radius_mm: Positive
+    rib_count: Annotated[int, Field(ge=3, strict=True)]
+    rib_radius_mm: Positive
+    rib_interference_mm: Positive
+    lead_notch_width_mm: Positive
+    lead_notch_outer_radius_mm: Positive
+    lead_envelope_width_mm: Positive
+    plate_screw_length_mm: Positive
+    rotor_radial_clearance_mm: Positive
+    boss_clearance_mm: Positive
+    encoder_board_max_square_mm: Positive
+    encoder_standoff_min_mm: Positive
+    encoder_standoff_max_mm: Positive
+    encoder_review_standoff_mm: Positive
+    encoder_pcb_thickness_mm: Positive
+    encoder_chip_side_height_mm: Positive
+    encoder_chip_side_radius_mm: Positive
+    encoder_below_pcb_depth_mm: Positive
+    encoder_standoff_hex_corner_mm: Positive
+    trial_assumptions_authorized: Literal[True]
+    process_compensation_mm: Literal[0.0]
+
+    @model_validator(mode="after")
+    def feasible_plate(self):
+        r_motor = self.motor_diameter_mm / 2
+        r_open = self.center_opening_mm / 2
+        if self.pocket_depth_mm > self.motor_stationary_height_mm - 1.0:
+            raise ValueError("pocket wall must stop at least 1 mm below the rotating bell")
+        if self.pin_diameter_mm > self.locating_hole_diameter_mm - 0.1:
+            raise ValueError("pin must clear the locating hole")
+        if self.pin_height_mm > self.locating_hole_depth_mm - 0.5:
+            raise ValueError("pin must not bottom in the locating hole")
+        if not self.locating_hole_radius_mm + self.pin_diameter_mm / 2 < r_motor:
+            raise ValueError("locating hole must lie on the stator face")
+        if self.pin_tab_inner_radius_mm > self.locating_hole_radius_mm - self.pin_diameter_mm / 2 - 0.5:
+            raise ValueError("pin tab must carry the whole pin base")
+        if r_open < self.motor_boss_diameter_mm / 2 + self.boss_clearance_mm:
+            raise ValueError("center opening must clear the rotating boss")
+        if r_open < self.stator_hole_circle_mm / 2 + self.encoder_standoff_hex_corner_mm / 2 + 0.5:
+            raise ValueError("center opening must pass encoder standoffs on the stator holes")
+        if r_motor - r_open < 2.5:
+            raise ValueError("stator seat must be at least 2.5 mm wide")
+        if not 0 < self.rib_interference_mm <= 0.3:
+            raise ValueError("crush rib interference must be in (0, 0.3] mm")
+        if self.rib_interference_mm + self.pocket_diametral_clearance_mm / 2 >= 2 * self.rib_radius_mm:
+            raise ValueError("ribs must protrude from the pocket wall by less than their width")
+        if self.lead_notch_width_mm < self.lead_envelope_width_mm + 1.0:
+            raise ValueError("lead notch must leave 0.5 mm each side of the lead envelope")
+        if self.lead_notch_outer_radius_mm > self.plate_diameter_mm / 2 - 5:
+            raise ValueError("lead notch must stay inside the plate")
+        if (self.encoder_chip_side_radius_mm >= r_open
+                and self.encoder_standoff_min_mm < self.floor_thickness_mm + self.encoder_chip_side_height_mm + 0.3):
+            raise ValueError("chip-side parts outside the opening must clear the floor at the shortest standoff")
+        if self.encoder_standoff_max_mm < self.encoder_standoff_min_mm:
+            raise ValueError("standoff range is inverted")
+        if not self.encoder_standoff_min_mm <= self.encoder_review_standoff_mm <= self.encoder_standoff_max_mm:
+            raise ValueError("review standoff must lie in the checked range")
+        return self
+
+
+class RotorDialSpec(Model):
+    """Degree dial screwed to a motor rotor face, with an inlaid scale and a fixed pointer on the plate."""
+    schema_version: Literal[1]
+    project_id: Identifier
+    design_type: Literal["rotor_dial"]
+    release_class: Literal["kinematic_demonstrator"]
+    length_unit: Literal["mm"]
+    plate_spec: Annotated[str, Field(pattern=r"^specs/[a-zA-Z0-9_.-]+\.yaml$")]
+    rotor_hole_circle_mm: Positive
+    rotor_hole_angles_deg: list[Finite]
+    rotor_thread_depth_mm: Positive
+    dial_diameter_mm: Positive
+    dial_thickness_mm: Positive
+    rotor_recess_depth_mm: Positive
+    rotor_recess_diametral_clearance_mm: Positive
+    center_hole_mm: Positive
+    screw_clearance_mm: Positive
+    countersink_diameter_mm: Positive
+    dial_screw_length_mm: Positive
+    inlay_depth_mm: Positive
+    scale_direction: Literal["clockwise", "counterclockwise"]
+    zero_angle_deg: Finite
+    tick_outer_inset_mm: Positive
+    minor_tick_step_deg: Positive
+    minor_tick_length_mm: Positive
+    minor_tick_width_mm: Positive
+    mid_tick_step_deg: Positive
+    mid_tick_length_mm: Positive
+    mid_tick_width_mm: Positive
+    major_tick_step_deg: Positive
+    major_tick_length_mm: Positive
+    major_tick_width_mm: Positive
+    label_step_deg: Positive
+    label_radius_mm: Positive
+    label_font_size_mm: Positive
+    font_path: Annotated[str, Field(min_length=1)]
+    zero_marker_radius_mm: Positive
+    zero_marker_size_mm: Positive
+    min_feature_mm: Positive
+    pointer_screw_angle_deg: Finite
+    pointer_arm_thickness_mm: Positive
+    pointer_width_mm: Positive
+    pointer_arm_inner_radius_mm: Positive
+    pointer_counterbore_mm: Positive
+    pointer_floor_under_head_mm: Positive
+    pointer_screw_length_mm: Positive
+    pointer_gap_to_dial_mm: Positive
+    pointer_tip_length_mm: Positive
+    pointer_riser_thickness_mm: Positive
+    pointer_lip_clearance_mm: Positive
+    pointer_lip_thickness_mm: Positive
+    pointer_lip_depth_mm: Positive
+    m3_head_diameter_mm: Positive
+    m3_head_height_mm: Positive
+    rotating_clearance_mm: Positive
+    trial_assumptions_authorized: Literal[True]
+    process_compensation_mm: Literal[0.0]
+
+    @model_validator(mode="after")
+    def feasible_dial(self):
+        hub = self.dial_thickness_mm - self.rotor_recess_depth_mm
+        if hub < 2.0:
+            raise ValueError("hub over the rotor face must be at least 2 mm thick")
+        if (self.countersink_diameter_mm - self.screw_clearance_mm) / 2 > hub - 1.0:
+            raise ValueError("countersink must leave 1 mm of hub under it")
+        if not 1.5 <= self.dial_screw_length_mm - hub <= self.rotor_thread_depth_mm:
+            raise ValueError("dial screws must engage 1.5 mm to the rotor's allowed thread depth")
+        if self.inlay_depth_mm > self.dial_thickness_mm - self.rotor_recess_depth_mm - 1.0:
+            raise ValueError("inlay must leave 1 mm of white under it")
+        widths = (self.minor_tick_width_mm, self.mid_tick_width_mm, self.major_tick_width_mm)
+        if min(widths) < self.min_feature_mm:
+            raise ValueError("tick marks narrower than the minimum printable feature")
+        steps = (self.minor_tick_step_deg, self.mid_tick_step_deg, self.major_tick_step_deg, self.label_step_deg)
+        for coarse, fine in zip(steps[1:], steps):
+            if not math.isclose(coarse / fine, round(coarse / fine)):
+                raise ValueError("tick and label steps must nest")
+        if not math.isclose(360 / self.minor_tick_step_deg, round(360 / self.minor_tick_step_deg)):
+            raise ValueError("minor tick step must divide 360")
+        r_out = self.dial_diameter_mm / 2 - self.tick_outer_inset_mm
+        pitch = r_out * math.radians(self.minor_tick_step_deg)
+        if pitch - self.mid_tick_width_mm < self.min_feature_mm:
+            raise ValueError("ticks too close: white between them below the minimum feature")
+        if self.pointer_counterbore_mm < self.m3_head_diameter_mm + 0.3:
+            raise ValueError("pointer counterbore must clear the M3 head")
+        if self.pointer_floor_under_head_mm >= self.pointer_arm_thickness_mm:
+            raise ValueError("counterbore must leave a floor inside the arm")
+        if self.pointer_gap_to_dial_mm < self.rotating_clearance_mm:
+            raise ValueError("pointer must clear the turning dial rim")
+        return self
+
+
 class BldcWinchSpec(Model):
     """Geared string winch on the BLDC stand: rotor gear, two shafts, drum, pulley, weight."""
     schema_version: Literal[1]
@@ -509,7 +690,7 @@ class BldcWinchSpec(Model):
 
 
 SPEC = TypeAdapter(Annotated[SmokeSpec | CubeSphereSpec | JointSpec | GearboxSpec | IndicatorDiscSpec | BldcStandSpec
-                             | BldcWinchSpec,
+                             | BldcWinchSpec | BldcPinnedPlateSpec | RotorDialSpec,
                              Field(discriminator="design_type")])
 
 
@@ -566,6 +747,10 @@ def readiness(spec, scope):
             blockers.append("gearbox trial fits, servo attachment, material and physical tests are unverified")
         elif isinstance(spec, BldcStandSpec):
             blockers.append("stand clearances use supplier nominals and Jamie's approximate encoder stack; physical fit unverified")
+        elif isinstance(spec, BldcPinnedPlateSpec):
+            blockers.append("2804 plate uses supplier-drawing nominals; crush-rib grip and pin fit are unmeasured; physical fit unverified")
+        elif isinstance(spec, RotorDialSpec):
+            blockers.append("2804 dial uses supplier-drawing rotor nominals; screw fit, inlay legibility and pointer fit are unverified")
         elif isinstance(spec, BldcWinchSpec):
             blockers.append("winch gears, bearings, shafts and string are seller nominals; tooth strength is not rated; physical fit unverified")
         elif isinstance(spec, IndicatorDiscSpec):
